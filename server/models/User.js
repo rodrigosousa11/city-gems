@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		required: true,
 	},
+	favoriteLists: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FavoriteList',
+    }],
 });
 
 const User = mongoose.model("User", userSchema);
