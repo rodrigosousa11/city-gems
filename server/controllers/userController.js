@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config();
 
+let refreshTokens = [];
+
 const registerUser = async (req, res) => {
 	try {
 		const { firstName, lastName, email, password } = req.body;
@@ -43,11 +45,13 @@ const loginUser = async (req, res) => {
 			return res.status(401).json({ message: "Invalid password" });
 		}
 
-		const token = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: "30d",
+		const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+			expiresIn: "30m",
 		});
-
-		res.json(token);
+		const refreshToken = jwt.sign({ userId: user._id }, process.env.REFRESH_TOKEN_SECRET);
+		
+		refreshTokens.push(refreshToken);
+		res.json({ accessToken: accessToken, refreshToken });
 	} catch (error) {
 		res.status(500).json({ message: "Login failed" });
 	}
@@ -69,8 +73,35 @@ const getLoggedInUserDetails = async (req, res) => {
 	}
 };
 
-module.exports = {
+
+const refreshToken = (req, res) => {
+	const refreshToken = req.body.token;
+	if (!refreshToken) {
+		return res.status(401).json({ message: "Missing refresh token" });
+	}
+	if (!refreshTokens.includes(refreshToken)) {
+		return res.status(403).json({ message: "Invalid refresh token" });
+	}
+	jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (error, user) => {
+		if (error) {
+			return res.status(403).json({ message: "Invalid refresh token" });
+		}
+		const accessToken = jwt.sign({ userId: user.userId }, process.env.ACCESS_TOKEN_SECRET, {
+			expiresIn: "15s",
+		});
+		res.json({ accessToken });
+	});
+};
+
+const logoutUser = (req, res) => {
+	refreshTokens = refreshTokens.filter(token => token !== req.body.token);
+	res.status(204).json({ message: "User logged out successfully" });
+};
+
+	module.exports = {
 	registerUser,
 	loginUser,
 	getLoggedInUserDetails,
+	refreshToken,
+	logoutUser,
 };
