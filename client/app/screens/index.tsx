@@ -1,7 +1,7 @@
 import { View, Text, Button, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import React from 'react';
 
-const Initial = ({navigation}: {navigation: any}) => {
+const Index = ({navigation}: {navigation: any}) => {
 
     return (
         <View style={styles.container}>
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Initial;
+export default Index;

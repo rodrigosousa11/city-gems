@@ -3,9 +3,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "./app/screens/Login";
 import Register from "./app/screens/Register";
-import Index from "./app/screens";
+import Index from "./app/screens/Index";
 import MyTabs from "./app/(tabs)/_layout";
-import { Button } from "react-native";
 
 const Stack = createNativeStackNavigator();
 

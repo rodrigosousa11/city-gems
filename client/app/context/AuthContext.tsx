@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import { jwtDecode } from 'jwt-decode';
-
 
 interface AuthProps {
     authState?: { token: string | null; authenticated: boolean | null };
@@ -12,12 +10,17 @@ interface AuthProps {
 }
 
 const TOKEN_KEY = 'token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 export const API_URL = 'http://localhost:3000';
-const AuthContext = createContext<AuthProps>({});
+export const AuthContext = createContext<AuthProps>({});
 
 export const useAuth = () => {
     return useContext(AuthContext);
 };
+
+export const api = axios.create({
+    baseURL: API_URL,
+});
 
 export const AuthProvider = ({ children }: any) => {
     const [authState, setAuthState] = useState<{ 
@@ -34,8 +37,7 @@ export const AuthProvider = ({ children }: any) => {
             console.log('stored:', token);
 
             if (token) {
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 setAuthState({ 
                     token: token, 
                     authenticated: true 
@@ -43,48 +45,45 @@ export const AuthProvider = ({ children }: any) => {
             }
         };
 
-        const checkTokenExpiration = async () => {
-            const token = authState.token;
-            if (token) {
-                const decodedToken: any = jwtDecode(token);
-                const currentTime = Date.now() / 1000; // Convert milliseconds to seconds
-                if (decodedToken.exp < currentTime + 60) { // Check if token is about to expire within 60 seconds
-                    try {
-                        const response = await axios.post(`${API_URL}/auth/refreshToken`, {
-                            token: authState.token,
-                        });
-                        const newAccessToken = response.data.accessToken;
-                        axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-                        setAuthState(prevState => ({
-                            ...prevState,
-                            token: newAccessToken,
-                        }));
-                        await SecureStore.setItemAsync(TOKEN_KEY, newAccessToken);
-                        
+        loadToken();
+    }, []);
 
-                        console.log('refreshed:', newAccessToken);
-                    } catch (error) {
-                        console.error("Failed to refresh token:", error);
-                        // Handle token refresh failure here
-                    }
+
+    api.interceptors.response.use(
+        response => response,
+        async error => {
+            const originalRequest = error.config;
+            if ((error.response.status === 401 || error.response.status === 403) && !originalRequest._retry) {
+                originalRequest._retry = true;
+                const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY); // Get refresh token from SecureStore
+                try {
+                    // Make a request to the refresh token endpoint
+                    const response = await axios.post(`${API_URL}/auth/token`, { token: refreshToken });
+                    const newAccessToken = response.data.accessToken;
+                    
+                    console.log('New access token:', newAccessToken); // Log the new access token
+
+                    // Store the new access token in SecureStore
+                    await SecureStore.setItemAsync(TOKEN_KEY, newAccessToken);
+    
+                    // Set the Authorization header for the instance
+                    api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+    
+                    // Retry the original request
+                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                    return api(originalRequest);
+                } catch (err) {
+                    console.error(err);
+                    return Promise.reject(err);
                 }
             }
-        };
-
-        const tokenInterval = setInterval(() => {
-            checkTokenExpiration();
-        }, 60000); // Check token expiration every minute
-
-        loadToken();
-
-        return () => clearInterval(tokenInterval); // Cleanup interval on unmount
-    }, [authState.token]); // Include authState.token in dependency array
-
-    // Rest of the code remains unchanged
+            return Promise.reject(error);
+        }
+    );
 
     const register = async (firstName: string, lastName: string, email: string, password: string) => {
         try {
-            const response = await axios.post(`${API_URL}/auth/register`, {
+            const response = await api.post(`${API_URL}/auth/register`, {
                 firstName,
                 lastName,
                 email,
@@ -98,22 +97,25 @@ export const AuthProvider = ({ children }: any) => {
 
     const login = async (email: string, password: string) => {
         try {
-            const response = await axios.post(`${API_URL}/auth/login`, {
+            const response = await api.post(`${API_URL}/auth/login`, {
                 email,
                 password,
             });
-
+            
             setAuthState({
-                token: response.data.refreshToken,
+                token: response.data.accessToken,
                 authenticated: true,
             });
-
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.refreshToken}`;
-
+            
+            api.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+            
             await SecureStore.setItemAsync(TOKEN_KEY, response.data.accessToken);
-
+            await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, response.data.refreshToken);
+            
+    
             console.log('refresh:', response.data.refreshToken);
-
+            console.log('access:', response.data.accessToken);
+    
             return response;
         } catch (error) {
             return {error: true, message: (error as any).response.data.message};
@@ -121,23 +123,22 @@ export const AuthProvider = ({ children }: any) => {
     };
 
     const logout = async () => {
-        const refreshToken = authState.token;
-        
+        const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
         try {
-            const response = await axios.delete(`${API_URL}/auth/logout`, {
-                headers: {
-                    Authorization: `Bearer ${refreshToken}`,
-                },
-            });
+            // Make a request to the logout endpoint
+            await api.delete('/auth/logout', { data: { token: refreshToken } });
+    
+            // Delete the tokens from SecureStore and reset the Authorization header
             await SecureStore.deleteItemAsync(TOKEN_KEY);
-            axios.defaults.headers.common['Authorization'] = '';
+            await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+            api.defaults.headers.common['Authorization'] = '';
             setAuthState({
                 token: null,
                 authenticated: false,
             });
-            return response.data;
+            console.log('Logged out');
         } catch (error) {
-            return { error: true, message: (error as any).response.data.message };
+            console.error('Failed to log out:', error);
         }
     };
     
