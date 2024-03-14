@@ -45,7 +45,7 @@ const loginUser = async (req, res) => {
         }
 
         const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: "2m",
+            expiresIn: "30m",
         });
         const refreshToken = jwt.sign({ userId: user._id }, process.env.REFRESH_TOKEN_SECRET);
 
@@ -96,7 +96,7 @@ const refreshToken = async (req, res) => {
             }
             
             const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: "15s",
+                expiresIn: "30m",
             });
             res.json({ accessToken });
         });
@@ -109,28 +109,27 @@ const refreshToken = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    const refreshToken = req.body.token;
     
-    if (!token) {
+    if (!accessToken) {
         return res.status(403).json({ message: "Missing token" });
     }
 
     try {
-        const user = await User.findOne({ refreshTokens: token });
+        const user = await User.findOne({ refreshTokens: refreshToken });
         if (!user) {
             return res.status(403).json({ message: "Invalid refresh token" });
         }
         
-        user.refreshTokens = user.refreshTokens.filter(t => t !== token);
+        user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
         await user.save();
         res.status(204).json({ message: "User logged out successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to log out user" });
     }
-};
-
-
+}
 
 	module.exports = {
 	registerUser,
