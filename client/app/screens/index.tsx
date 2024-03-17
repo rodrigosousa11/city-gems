@@ -1,13 +1,14 @@
-import { View, Text, Button, Image, StyleSheet, TouchableOpacity} from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import React from 'react';
+const logo = require('../../assets/logo.png');
 
 const Index = ({navigation}: {navigation: any}) => {
 
     return (
         <View style={styles.container}>
             <Image
-                source={{ uri: 'url_do_seu_logo' }} 
-                style={{ width: 100, height: 100 }}
+                source={logo} 
+                style={styles.image}
             />
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
@@ -31,6 +32,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignItems: 'center',
+        marginTop: 60,
     },
     button: {
         width: "100%",
@@ -59,6 +61,11 @@ const styles = StyleSheet.create({
         color: '#1E232C',
         fontSize: 19,
     },
+    image: {
+        width: 180,
+        height: 180,
+        marginBottom: 60,
+    }
 });
 
 export default Index;
