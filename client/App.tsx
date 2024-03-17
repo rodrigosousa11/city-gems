@@ -17,7 +17,7 @@ export default function App() {
 }
 
 export const Layout = () => {
-    const { authState, onLogout } = useAuth();
+    const { authState } = useAuth();
     
     return (
         <NavigationContainer>
