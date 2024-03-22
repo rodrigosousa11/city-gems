@@ -19,8 +19,8 @@ const Login = ({navigation}: {navigation: any}) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Bem-vindo de volta!</Text>
             <View style={styles.form}>
+                <Text style={styles.title}>Welcome back!</Text>
                 <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
@@ -36,9 +36,9 @@ const Login = ({navigation}: {navigation: any}) => {
                     secureTextEntry={true} />
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={handleLogin} style={styles.button}>
-                        <Text style={styles.buttonText}>Iniciar sessão</Text>
+                        <Text style={styles.buttonText}>Sign In</Text>
                     </TouchableOpacity>
-                    <Text style={styles.linkText}>Não tens conta? <Link to={{ screen: 'Register' }} style={styles.link}>Regista-te</Link></Text>
+                    <Text style={styles.linkText}>Not a member? <Link to={{ screen: 'Register' }} style={styles.link}>Sign Up</Link></Text>
                 </View>
             </View>
         </View>
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
         marginBottom: 20,
     },
