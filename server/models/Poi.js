@@ -20,7 +20,7 @@ const poiSchema = new mongoose.Schema({
     },
     images: [{
         type: String,
-        required: true,
+        required: false,
     }],
     reviews: [{
         type: mongoose.Schema.Types.ObjectId,
