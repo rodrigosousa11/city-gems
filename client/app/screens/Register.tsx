@@ -49,9 +49,9 @@ const Register = ({navigation}: {navigation: any}) => {
                     autoCapitalize="none" />
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={handleRegister} style={styles.button}>
-                        <Text style={styles.buttonText}>Criar conta</Text>
+                        <Text style={styles.buttonText}>Sign Up</Text>
                     </TouchableOpacity>
-                    <Text style={styles.linkText}>Já tens conta? <Link to={{ screen: 'Login' }} style={styles.link}>Inicia sessão</Link></Text>
+                    <Text style={styles.linkText}>Have an account already? <Link to={{ screen: 'Login' }} style={styles.link}>Sign In</Link></Text>
                 </View>
             </View>
         </View>
