@@ -4,6 +4,8 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const authRouter = require("./routes/auth");
+const userRouter = require("./routes/user");
+const poiRouter = require("./routes/poi");
 
 const app = express();
 
@@ -16,6 +18,8 @@ mongoose
     .catch(console.error);
 
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
+app.use("/poi", poiRouter);
 
 app.listen(3000, () => {
 	console.log("Server is running on  http://localhost:3000/");

@@ -60,24 +60,6 @@ const loginUser = async (req, res) => {
     }
 };
 
-
-const getLoggedInUserDetails = async (req, res) => {
-	try {
-		const userId = req.user;
-
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-
-		res.json({ firstName: user.firstName, lastName: user.lastName });
-	} catch (error) {
-		console.log(error);
-		res.status(500).json({ message: "Failed to fetch user details" });
-	}
-};
-
-
 const refreshToken = async (req, res) => {
     const refreshToken = req.body.token;
     if (!refreshToken) {
@@ -134,7 +116,6 @@ const logoutUser = async (req, res) => {
 	module.exports = {
 	registerUser,
 	loginUser,
-	getLoggedInUserDetails,
 	refreshToken,
 	logoutUser,
 };
