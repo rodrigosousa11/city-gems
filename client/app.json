@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "client3",
-    "slug": "client3",
+    "name": "citygems-client",
+    "slug": "citygems-client",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,14 +17,17 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "usesNonExemptEncryption": false
-      }
+        "usesNonExemptEncryption": false,
+        "googleMapsApiKey": "AIzaSyAwftX6PDDHHKdkigS3frXOgZw7H6oK0JM"
+      },
+      "bundleIdentifier": "com.anonymous.citygemsclient"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.citygemsclient"
     },
     "web": {
       "favicon": "./assets/favicon.png"
