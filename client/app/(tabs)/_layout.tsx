@@ -3,7 +3,7 @@ import Home from "./index";
 import Map from "./map";
 import Lists from "./lists";
 import Settings from "./settings";
-import { Button } from "react-native"; // Import PermissionsAndroid
+import { Text, TouchableOpacity, StyleSheet } from "react-native"; 
 import { useAuth } from "../context/AuthContext";
 import { Octicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
@@ -81,7 +81,9 @@ export default function MyTabs() {
                 component={Settings}
                 options={{
                     headerRight: () => (
-                        <Button onPress={onLogout} title="Logout" />
+                        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                            <Text>Logout</Text>
+                        </TouchableOpacity>
                     ),
                     tabBarIcon: ({ color }) => (
                         <Feather name="settings" size={24} color={color} />
@@ -91,3 +93,10 @@ export default function MyTabs() {
         </Tab.Navigator>
     );
 }
+
+const styles = StyleSheet.create({
+    logoutButton: {
+        marginRight: 10,
+        padding: 8,
+    },
+});
