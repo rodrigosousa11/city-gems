@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image } from "react-native";
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, Modal, ActivityIndicator } from "react-native";
 import { AxiosError } from "axios";
 import { API_URL, api } from "../context/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
@@ -13,6 +13,7 @@ export default function Settings() {
     const [latitude, setLatitude] = useState("");
     const [longitude, setLongitude] = useState("");
     const [images, setImages] = useState<Array<{ uri: string, url: string }>>([]);
+    const [showLoading, setShowLoading] = useState(false);
 
     useEffect(() => {
         // Fetch user data on component mount
@@ -49,25 +50,44 @@ export default function Settings() {
         }
     };
 
-    const uploadImagesToFirebase = async () => {
+    const uploadImagesToFirebase = async () => {    
         try {
-            const urls = await Promise.all(images.map(async (image) => {
+            const uploadPromises = images.map(async (image) => {
                 const imageRef = ref(storage, 'images/' + Math.random().toString(36).substring(7));
                 const response = await fetch(image.uri);
                 const blob = await response.blob();
-                const snapshot = await uploadBytesResumable(imageRef, blob);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-                return downloadURL;
-            }));
-            return urls;
+                const uploadTask = uploadBytesResumable(imageRef, blob);
+
+                // Return a promise that resolves with the download URL after upload is complete
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        () => {},
+                        (error) => {
+                            console.error("Error uploading image:", error);
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(downloadURL);
+                        }
+                    );
+                });
+            });
+    
+            // Wait for all uploads to complete and obtain the URLs
+            const imageUrls = await Promise.all(uploadPromises);
+            return imageUrls.filter(url => url); // Filter out any null URLs
         } catch (error) {
             console.error("Error uploading images to Firebase:", error);
             return [];
         }
     };
     
+    
     const createPOI = async () => {
+        setShowLoading(true);
         const imageUrls = await uploadImagesToFirebase();
+        setShowLoading(false);
     
         try {
             const response = await api.post(`${API_URL}/poi/new`, {
@@ -127,6 +147,18 @@ export default function Settings() {
                     <Button title="Create POI" onPress={createPOI} />
                 </View>
             )}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={showLoading}
+                onRequestClose={() => setShowLoading(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <ActivityIndicator size="large" color="#000000" />
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -158,5 +190,16 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         padding: 10,
         marginBottom: 10,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 15,
     },
 });
