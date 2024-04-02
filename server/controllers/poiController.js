@@ -2,13 +2,14 @@ const POI = require('../models/Poi');
 
 const createPoi = async (req, res) => {
     try {
-        const { name, description, latitude, longitude } = req.body;
+        const { name, description, latitude, longitude, images } = req.body;
 
         const newPoi = new POI({
             name,
             description,
             latitude,
             longitude,
+            images
         });
 
         await newPoi.save();
