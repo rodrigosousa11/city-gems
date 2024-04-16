@@ -1,13 +1,41 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View, Image } from "react-native";
+import { API_URL, api } from "../context/AuthContext";
 
+import { POI } from "../screens/Poi";
 
 export default function Home() {
+    const [pois, setPois] = useState<POI[]>([]);
+
+    useEffect(() => {
+        api.get(`${API_URL}/poi/all`)
+            .then(response => {
+                setPois(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching POIs:", error);
+            });
+    }, []);
+
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Home</Text>
+            {pois.map(poi => (
+                <View key={poi._id}>
+                    <Text>{poi.name}</Text>
+                    {poi.images.map(imageUrl => (
+                        <Image
+                            key={imageUrl}
+                            source={{ uri: imageUrl }}
+                            style={styles.image}
+                        />
+                    ))}
+                </View>
+            ))}
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -15,8 +43,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    title: {
-        fontSize: 20,
-        fontWeight: "bold",
+    image: {
+        width: 200,
+        height: 200,
+        resizeMode: "cover",
     }
 });
+

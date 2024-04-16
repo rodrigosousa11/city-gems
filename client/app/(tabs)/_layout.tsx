@@ -67,10 +67,10 @@ export default function MyTabs() {
                 }}
             />
             <Tab.Screen
-                name="Lists"
+                name="My Lists"
                 component={Lists}
                 options={{
-                    headerShown: false,
+                    headerShown: true,
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="list" size={28} color={color} />
                     ),

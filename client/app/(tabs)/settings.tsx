@@ -31,6 +31,7 @@ export default function Settings() {
             });
     }, []);
 
+
     const pickImage = async () => {
         // Pick an image from the gallery
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -110,8 +111,8 @@ export default function Settings() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>{userData.firstName} {userData.lastName} {userData.role}</Text>
-            {userData.role === "admin" && (
+            <Text style={styles.title}>{userData.firstName} {userData.lastName} - {userData.role}</Text>
+            {userData.role === "Admin" && (
                 <View style={styles.formContainer}>
                     <Text style={styles.formLabel}>Add a POI</Text>
                     <TextInput

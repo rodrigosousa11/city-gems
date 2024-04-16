@@ -12,10 +12,10 @@ const Index = ({navigation}: {navigation: any}) => {
             />
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-                    <Text style={styles.buttonText}>Iniciar sessão</Text>
+                    <Text style={styles.buttonText}>Sign In</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate('Register')}>
-                    <Text style={styles.registerButtonText}>Registo</Text>
+                    <Text style={styles.registerButtonText}>Sign Up</Text>
                 </TouchableOpacity>
             </View>
         </View>
