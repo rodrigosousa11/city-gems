@@ -6,6 +6,7 @@ import Register from "./app/screens/Register";
 import Index from "./app/screens/Index";
 import POIDetails from "./app/screens/Poi";
 import MyTabs from "./app/(tabs)/_layout";
+import List from "./app/screens/List";
 
 import { POI } from './app/screens/Poi';
 
@@ -17,6 +18,7 @@ type RootStackParamList = {
     Index: undefined;
     Login: undefined;
     Register: undefined;
+    List: { name: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,15 +36,34 @@ export const Layout = () => {
     
     return (
         <NavigationContainer>
-            <Stack.Navigator>
+            <Stack.Navigator
+                screenOptions={{
+                    headerBackTitleVisible: false, 
+                }}
+                >
                 {authState?.authenticated ? (
                     <>
                         <Stack.Screen
                             name="MyTabs"
                             component={MyTabs}
-                            options={{ headerShown: false }}
+                            options={{ 
+                                headerShown: false,
+                            }}
                         />
-                        <Stack.Screen name="POIDetails" component={POIDetails} />
+                        <Stack.Screen 
+                            name="POIDetails" 
+                            component={POIDetails} 
+                            options={({ route }) => ({ 
+                                title: route.params?.poi.name || 'POI Details' 
+                            })}
+                        />
+                        <Stack.Screen 
+                            name="List" 
+                            component={List} 
+                            options={({ route }) => ({ 
+                                title: route.params?.name || 'My list' 
+                            })}
+                        />
                     </>
                 ) : (
                     <>

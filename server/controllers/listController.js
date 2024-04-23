@@ -12,6 +12,22 @@ const getUserLists = async (req, res) => {
     }
 };
 
+const getListPois = async (req, res) => {
+    try {
+        const listId = req.params.id;
+
+        const list = await FavoriteList.findById(listId).populate('pois');
+
+        if (!list) {
+            return res.status(404).json({ message: "Favorite list not found" });
+        }
+
+        res.status(200).json(list.pois);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 const createList = async (req, res) => {
     try {
         const { name } = req.body;
@@ -31,17 +47,18 @@ const createList = async (req, res) => {
     }
 };
 
-
-const updateList = async (req, res) => {
+const addPOIToList = async (req, res) => {
     try {
         const listId = req.params.id;
-        const userId = req.user;
+        const userId = req.user; 
+
+        const poiToAdd = req.body.poiId;
 
         const updatedList = await FavoriteList.findOneAndUpdate(
             { _id: listId, user: userId },
-            { $set: req.body },
-            { new: true } 
-        );
+            { $push: { pois: poiToAdd } }, 
+            { new: true }
+        ).populate('pois');
 
         if (!updatedList) {
             return res.status(404).json({ message: "Favorite list not found" });
@@ -52,7 +69,6 @@ const updateList = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
-
 
 const deleteList = async (req, res) => {
     try {
@@ -72,9 +88,34 @@ const deleteList = async (req, res) => {
     }
 };
 
+const deletePOIFromList = async (req, res) => {
+    try {
+        const listId = req.params.listId;
+        const userId = req.user;
+        const poiId = req.params.poiId;
+
+        const updatedList = await FavoriteList.findOneAndUpdate(
+            { _id: listId, user: userId },
+            { $pull: { pois: poiId } }, // Remove the specified POI ID from the 'pois' array
+            { new: true }
+        ).populate('pois');
+
+        if (!updatedList) {
+            return res.status(404).json({ message: "Favorite list not found" });
+        }
+
+        res.status(200).json(updatedList);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 module.exports = {
     getUserLists,
+    getListPois,
     createList,
-    updateList,
-    deleteList
+    deleteList,
+    addPOIToList,
+    deletePOIFromList
 };
