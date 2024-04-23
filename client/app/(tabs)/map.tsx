@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import { StyleSheet, View, TextInput, Button, Text, SafeAreaView } from "react-native";
+import { StyleSheet, View, TextInput, Button, Text, SafeAreaView, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
 import { API_URL, api } from "../context/AuthContext";
 import { AxiosError } from "axios";
@@ -19,83 +19,134 @@ export default function Map({navigation}: {navigation: any}) {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResult, setSearchResult] = useState<null | { name: string; latitude: number; longitude: number; }>(null);
     const [pois, setPOIs] = useState<POI[]>([]);
+    const [poiSuggestions, setPOISuggestions] = useState<POI[]>([]);
+    const [containerHeight, setContainerHeight] = useState<number>(0);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const inputRef = useRef<TextInput>(null); // Ref for the TextInput
 
     const mapRef = useRef<MapView>(null);
 
     useEffect(() => {
-        // Função para fazer a solicitação GET ao servidor
+        // Function to make GET request to the server
         api.get(`${API_URL}/poi/all`)
             .then(response => {
                 const data = response.data;
-                setPOIs(data); // Define os POIs recebidos do servidor
+                setPOIs(data); // Set the POIs received from the server
             })
             .catch((error: AxiosError) => {
-                console.error("Erro ao buscar POIs:", error);
+                console.error("Error fetching POIs:", error);
             });
     }, []);
 
-    const handleSearch = () => {
-        const result = {
-            name: "Search Result",
-            latitude: 41.15,
-            longitude: -8.61,
-        };
-        setSearchResult(result);
-        // Zoom para a localização do resultado da pesquisa
+    const filterPOIs = (query: string) => {
+        if (query === "") {
+            setPOISuggestions(pois);
+        } else {
+            const filteredPOIs = pois.filter(poi =>
+                poi.name.toLowerCase().includes(query.toLowerCase())
+            );
+            setPOISuggestions(filteredPOIs);
+        }
+    };
+
+    // Function to handle search input change
+    const handleSearchInputChange = (query: string) => {
+        setSearchQuery(query);
+        filterPOIs(query);
+        setShowSuggestions(true);
+        
+        // Show all POIs when search bar is clicked
+        if (!query) {
+            setPOISuggestions(pois);
+        }
+    };
+
+    // Function to handle POI selection from suggestions
+    const handlePOISuggestionPress = (poi: POI) => {
+        setSearchQuery(poi.name); // Set search query to selected POI name
+        setSearchResult(poi); // Set search result to selected POI
         mapRef.current?.animateToRegion({
-            latitude: result.latitude,
-            longitude: result.longitude,
+            latitude: poi.latitude,
+            longitude: poi.longitude,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
         });
     };
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.searchContainer}>
-                <FontAwesome name="search" size={20} color="#999" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                />
-                <Button title="Search" onPress={handleSearch} />
-            </View>
-            <MapView
-                ref={mapRef}
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={DEFAULT_REGION}
-                showsUserLocation
-                showsMyLocationButton
-            >
-                {pois.map(poi => (
-                    <Marker
+    const renderPOISuggestions = () => {
+        return (
+            <View style={[styles.suggestionsContainer, { top: containerHeight + 70 }]}>
+                {poiSuggestions.map(poi => (
+                    <TouchableOpacity
                         key={poi._id}
-                        coordinate={{
-                            latitude: poi.latitude,
-                            longitude: poi.longitude,
-                        }}
-                        title={poi.name}
-                        onPress={() => navigation.navigate('POIDetails', { poi })}
-                    />
+                        style={styles.suggestionItem}
+                        onPress={() => handlePOISuggestionPress(poi)}
+                    >
+                        <Text>{poi.name}</Text>
+                    </TouchableOpacity>
                 ))}
+            </View>
+        );
+    };
 
-                {searchResult && (
-                    <Marker
-                        key={"searchResult"} 
-                        coordinate={{
-                            latitude: searchResult.latitude,
-                            longitude: searchResult.longitude,
-                        }}
-                        title={searchResult.name}
+    return (
+        <TouchableWithoutFeedback onPress={() => {
+            setShowSuggestions(false);
+            inputRef.current?.blur(); // Blur the TextInput
+        }}>
+            <SafeAreaView style={styles.container}>
+                <View 
+                    style={styles.searchContainer} 
+                    onLayout={(event) => {
+                        const { height } = event.nativeEvent.layout;
+                        setContainerHeight(height); // Store the height of the search container
+                    }}
+                >
+                    <FontAwesome name="search" size={20} color="#999" style={styles.searchIcon} />
+                    <TextInput
+                        ref={inputRef} // Assign the ref to the TextInput
+                        style={styles.searchInput}
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChangeText={handleSearchInputChange}
+                        autoCapitalize="none"
+                        onFocus={() => handleSearchInputChange("")} // Show all locations when search bar is clicked
                     />
-                )}
-            </MapView>
+                </View>
+                {showSuggestions && renderPOISuggestions()}
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    provider={PROVIDER_GOOGLE}
+                    initialRegion={DEFAULT_REGION}
+                    showsUserLocation
+                    showsMyLocationButton
+                >
+                    {pois.map(poi => (
+                        <Marker
+                            key={poi._id}
+                            coordinate={{
+                                latitude: poi.latitude,
+                                longitude: poi.longitude,
+                            }}
+                            title={poi.name}
+                            onPress={() => navigation.navigate('POIDetails', { poi })}
+                        />
+                    ))}
 
-
-        </SafeAreaView>
+                    {searchResult && (
+                        <Marker
+                            key={"searchResult"} 
+                            coordinate={{
+                                latitude: searchResult.latitude,
+                                longitude: searchResult.longitude,
+                            }}
+                            title={searchResult.name}
+                        />
+                    )}
+                </MapView>
+            </SafeAreaView>
+        </TouchableWithoutFeedback>
     );
 }
 
@@ -118,12 +169,26 @@ const styles = StyleSheet.create({
     },
     searchIcon: {
         marginRight: 10,
-        
     },
     searchInput: {
         flex: 1,
         height: 40,
         marginRight: 10,
         paddingHorizontal: 10,
+    },
+    suggestionsContainer: {
+        position: 'absolute',
+        left: 20,
+        right: 20,
+        backgroundColor: 'white',
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        zIndex: 1,
+    },
+    suggestionItem: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
     },
 });
