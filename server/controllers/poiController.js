@@ -125,7 +125,7 @@ const addReviewToPoi = async (req, res) => {
         poi.reviews.push(newReview); // Add the review to the POI's reviews array
         await poi.save();
 
-        res.status(201).json({ message: "Review added successfully" });
+        res.status(201).json({ message: "Review added successfully", review: newReview });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to add review to POI" });

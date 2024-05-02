@@ -43,9 +43,10 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
     const [weather, setWeather] = useState<string>('');
     const [reviews, setReviews] = useState<Review[]>(poi.reviews);
     const [newReview, setNewReview] = useState<string>('');
-    const [selectedRating, setSelectedRating] = useState<number>(1); // State to hold the selected rating
     const [loadingWeather, setLoadingWeather] = useState<boolean>(true);
     const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State to control the modal visibility
+    const [displayedReviewsCount, setDisplayedReviewsCount] = useState<number>(5); // Change 5 to the initial number of reviews you want to display
+    const [allReviewsLoaded, setAllReviewsLoaded] = useState<boolean>(false);
 
     useEffect(() => {
         fetchWeatherData();
@@ -55,30 +56,33 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
         // Implement weather data fetching logic here
     };
 
-    const handleReviewSubmit = (data: { comment: string; rating: number }) => {
-        setNewReview(data.comment);
-        setSelectedRating(data.rating);
-        setIsModalVisible(false);
-    };
-
-    
-    const handleAddReview = async () => {
+    const handleAddReview = async (data: { comment: string; rating: number }) => {
         try {
-            console.log("Sending review with comment:", newReview);
-            console.log("Sending review with rating:", selectedRating);
+            console.log("Sending review with comment:", data.comment);
+            console.log("Sending review with rating:", data.rating);
     
             const response = await api.post(`${API_URL}/poi/${poi._id}/review`, {
-                rating: selectedRating,
-                comment: newReview, // Update to send 'comment' instead of 'review'
+                rating: data.rating,
+                comment: data.comment,
             });
             console.log("Review added:", response.data);
-            setReviews([...reviews, response.data]);
+    
+            // Fetch the updated reviews from the server
+            const updatedReviewsResponse = await api.get(`${API_URL}/poi/get/${poi._id}`);
+            console.log("Updated reviews:", updatedReviewsResponse.data.reviews);
+    
+            // Update the state with the updated reviews
+            setReviews(updatedReviewsResponse.data.reviews);
             setNewReview('');
         } catch (error) {
             console.error("Error adding review:", error);
         }
     };
     
+    const calculateAverageRating = () => {
+        const total = reviews.reduce((acc, review) => acc + review.rating, 0);
+        return reviews.length > 0 ? (total / reviews.length) : 0;
+    };
     
     const renderWeather = () => {
         if (loadingWeather) {
@@ -98,9 +102,16 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
         }
         return stars;
     };
+
+    const renderEmptyList = () => (
+        <View style={styles.emptyListContainer}>
+            <Text style={styles.emptyListText}>No reviews yet.</Text>
+            <Text style={styles.emptyListSubText}>Be the first to write a review!</Text>
+        </View>
+    );
     
-    return (
-        <View style={styles.container}>
+    const renderHeader = () => (
+        <View>
             {poi.images.length > 0 ? (
                 <PagerView style={styles.pagerView} initialPage={0}>
                     {poi.images.map((image, index) => (
@@ -117,38 +128,71 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
                 <Text style={styles.title}>{poi.name}</Text>
                 <Text style={styles.description}>{poi.description}</Text>
                 <Text style={styles.weather}>Weather: {renderWeather()}</Text>
-                <Text style={styles.reviews}>Reviews:</Text>
+                {reviews.length > 0 && (
+                    <View style={styles.reviewsTitle}> 
+                        <Text style={styles.reviews}>Reviews</Text>
+                        <Text style={styles.reviews}>{renderStars(calculateAverageRating())}</Text> 
+                    </View>
+                )}
             </View>
+        </View>
+    );
 
-            <View style={styles.reviewContainer}>
-                <FlatList
-                    data={reviews}
-                    renderItem={({ item }) => (
-                        <View style={styles.reviewItem}>
-                            <View style={styles.reviewHeader}>
-                                <Text style={styles.userName}>{item.user.firstName} {item.user.lastName}</Text>
-                                <View style={styles.ratingContainer}>
-                                    {renderStars(item.rating)}
-                                </View>
-                            </View>
-                            <Text style={styles.comment}>{item.comment}</Text>
-                        </View>
-                    )}
-                    keyExtractor={(item, index) => item._id}
+    const renderFooter = () => {
+        return (
+            <View style={styles.reviewSubmissionContainer}>
+                {reviews.length > 0 && (
+                    <Button
+                        title={allReviewsLoaded ? "See less reviews ▲" : "See more reviews ▼"}
+                        color="black"
+                        onPress={() => {
+                            if (allReviewsLoaded) {
+                                setDisplayedReviewsCount(5);
+                                setAllReviewsLoaded(false);
+                            } else {
+                                setDisplayedReviewsCount(prevCount => {
+                                    const newCount = prevCount + 5;
+                                    if (newCount >= reviews.length) {
+                                        setAllReviewsLoaded(true);
+                                    }
+                                    return newCount;
+                                });
+                            }
+                        }}
+                    />
+                )}
+                <Button color="black" title="Add Review" onPress={() => setIsModalVisible(true)} />
+                <AddReviewModal
+                    visible={isModalVisible}
+                    onClose={() => setIsModalVisible(false)}
+                    onSubmit={handleAddReview}
                 />
             </View>
+        );
+    };
 
-            <View style={styles.reviewSubmissionContainer}>
-                <Button title="Add Review" onPress={() => setIsModalVisible(true)} />
-            </View>
-
-            <AddReviewModal
-                visible={isModalVisible}
-                onClose={() => setIsModalVisible(false)}
-                onSubmit={handleReviewSubmit}
-            />
-
-        </View>
+    return (
+        <FlatList
+            data={reviews.slice(0, displayedReviewsCount)} 
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => (
+                <View style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                        <Text style={styles.userName}>
+                            {item.user.firstName} {item.user.lastName}
+                        </Text>
+                        <View style={styles.ratingContainer}>
+                            {renderStars(item.rating)}
+                        </View>
+                    </View>
+                    <Text style={styles.comment}>{item.comment}</Text>
+                </View>
+            )}
+            ListEmptyComponent={renderEmptyList}
+            ListFooterComponent={renderFooter}
+            keyExtractor={item => item._id}
+            style={styles.container}
+        />
     );
 };
 
@@ -165,77 +209,76 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     contentContainer: {
-        paddingHorizontal: 10,
+        paddingHorizontal: 12,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 5,
+        marginBottom: 10,
     },
     description: {
         fontSize: 16,
-        marginTop: 5,
+        marginBottom: 10,
     },
     weather: {
-        fontSize: 18,
-        marginTop: 20,
+        fontSize: 14,
+        marginBottom: 10,
     },
     reviews: {
         fontSize: 18,
-        marginTop: 20,
-        marginBottom: 10,
-    },
-    reviewContainer: {
-        flex: 1,
-        paddingHorizontal: 10,
-        paddingBottom: 20,
+        fontWeight: 'bold',
+        marginBottom: 5,
     },
     reviewItem: {
-        marginBottom: 20,
+        marginBottom: 10,
+        marginHorizontal: 10,
         padding: 10,
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 10,
     },
+    reviewsTitle: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
     reviewHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 5,
     },
     userName: {
         fontWeight: 'bold',
     },
-    ratingContainer: {
-        flexDirection: 'row',
-    },
     comment: {
         color: '#333',
     },
-    carouselImage: {
-        width: '100%',
-        aspectRatio: 4 / 3,
-    },
-    inputContainer: {
+    ratingContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-        justifyContent: 'space-between', // Add this to distribute space evenly
-    },
-    input: {
-        flex: 1,
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
-        marginRight: 10,
-    },
-    ratingPickerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
     },
     reviewSubmissionContainer: {
-        marginTop: 20,
-        paddingHorizontal: 10,
+        paddingBottom: 30,
+    },
+    carouselImage: {
+        width: '100%',
+        height: 300,
+    },
+    loadMoreButton: {
+        textAlign: 'center',
+        marginVertical: 10,
+    },
+    emptyListContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyListText: {
+        fontSize: 18,
+        color: '#888',
+    },
+    emptyListSubText: {
+        fontSize: 16,
+        color: '#aaa',
+        marginTop: 10,
     },
 });
 
