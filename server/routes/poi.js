@@ -9,5 +9,6 @@ router.get("/all", authenticateToken, poiController.getPoIs);
 router.get("/get/:id", authenticateToken, poiController.getPoI);
 router.put("/update/:id", authenticateToken, authenticateRole, poiController.updatePoi);
 router.delete("/delete/:id", authenticateToken, authenticateRole, poiController.deletePoi);
+router.post("/:id/review", authenticateToken, poiController.addReviewToPoi);
 
 module.exports = router;

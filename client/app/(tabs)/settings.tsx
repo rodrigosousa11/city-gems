@@ -5,9 +5,10 @@ import { API_URL, api } from "../context/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebaseConfig";
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function Settings() {
-    const [userData, setUserData] = useState({ firstName: "", lastName: "", role: "" });
+    const [userData, setUserData] = useState({ firstName: "", lastName: "", email: "", role: "" });
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [latitude, setLatitude] = useState("");
@@ -16,11 +17,11 @@ export default function Settings() {
     const [showLoading, setShowLoading] = useState(false);
 
     useEffect(() => {
-        // Fetch user data on component mount
         api.get(`${API_URL}/user/me`)
             .then(response => {
-                const { firstName, lastName, role } = response.data;
-                setUserData({ firstName, lastName, role });
+                const { user: { firstName, lastName, email, isAdmin } } = response.data;
+                const role = isAdmin ? "Admin" : "User";
+                setUserData({ firstName, lastName, email, role });
             })
             .catch((error: AxiosError) => {
                 if (error.isAxiosError && !error.response) {
@@ -30,10 +31,8 @@ export default function Settings() {
                 }
             });
     }, []);
-
-
+    
     const pickImage = async () => {
-        // Pick an image from the gallery
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -44,13 +43,19 @@ export default function Settings() {
         if (!result.canceled && result.assets) {
             try {
                 const uri = result.assets[0].uri;
-                setImages(prevImages => [...prevImages, { uri, url: '' }]);
+                const compressedImage = await compressImage(uri);
+                setImages(prevImages => [...prevImages, { uri: compressedImage.uri, url: '' }]);
             } catch (error) {
                 console.error("Error picking image:", error);
             }
         }
     };
-
+    
+    const compressImage = async (uri: string) => {
+        const compressedImage = await ImageManipulator.manipulateAsync(uri, [], { compress: 0.1 });
+        return compressedImage;
+    };
+    
     const uploadImagesToFirebase = async () => {    
         try {
             const uploadPromises = images.map(async (image) => {
@@ -58,8 +63,7 @@ export default function Settings() {
                 const response = await fetch(image.uri);
                 const blob = await response.blob();
                 const uploadTask = uploadBytesResumable(imageRef, blob);
-
-                // Return a promise that resolves with the download URL after upload is complete
+    
                 return new Promise((resolve, reject) => {
                     uploadTask.on('state_changed',
                         () => {},
@@ -75,9 +79,8 @@ export default function Settings() {
                 });
             });
     
-            // Wait for all uploads to complete and obtain the URLs
             const imageUrls = await Promise.all(uploadPromises);
-            return imageUrls.filter(url => url); // Filter out any null URLs
+            return imageUrls.filter(url => url);
         } catch (error) {
             console.error("Error uploading images to Firebase:", error);
             return [];
@@ -108,10 +111,11 @@ export default function Settings() {
             console.error("Error creating POI:", error);
         }
     };
-
+    
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>{userData.firstName} {userData.lastName} - {userData.role}</Text>
+            <Text style={styles.title}>{userData.firstName} {userData.lastName}</Text>
+            <Text style={styles.data}>Email: {userData.email}</Text>
             {userData.role === "Admin" && (
                 <View style={styles.formContainer}>
                     <Text style={styles.formLabel}>Add a POI</Text>
@@ -173,6 +177,10 @@ const styles = StyleSheet.create({
         fontSize: 24,
         marginBottom: 20,
     },
+    data: {
+        fontSize: 18,
+        marginBottom: 20,
+    },
     formContainer: {
         marginBottom: 20,
     },
@@ -187,7 +195,7 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: "#ccc",
+        borderColor: "#7d7d7d",
         borderRadius: 5,
         padding: 10,
         marginBottom: 10,

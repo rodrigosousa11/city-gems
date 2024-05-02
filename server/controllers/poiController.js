@@ -1,4 +1,5 @@
 const POI = require('../models/Poi');
+const Review = require('../models/Review');
 
 const createPoi = async (req, res) => {
     try {
@@ -23,7 +24,13 @@ const createPoi = async (req, res) => {
 
 const getPoIs = async (req, res) => {
     try {
-        const pois = await POI.find();
+        const pois = await POI.find().populate({
+            path: 'reviews',
+            populate: { 
+                path: 'user',
+                select: 'firstName lastName'
+            }
+        });
         res.json(pois);
     } catch (error) {
         console.error(error);
@@ -35,7 +42,14 @@ const getPoI = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const poi = await POI.findById(id);
+        const poi = await POI.findById(id).populate({
+            path: 'reviews',
+            populate: { 
+                path: 'user',
+                select: 'firstName lastName'
+            }
+        });
+
         if (!poi) {
             return res.status(404).json({ message: "POI not found" });
         }
@@ -89,11 +103,40 @@ const deletePoi = async (req, res) => {
     }
 };
 
+const addReviewToPoi = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { comment, rating } = req.body;
+        const user = req.user;
+
+        const poi = await POI.findById(id);
+        if (!poi) {
+            return res.status(404).json({ message: "POI not found" });
+        }
+
+        const newReview = new Review({
+            user,
+            comment,
+            rating
+        });
+
+        await newReview.save();
+
+        poi.reviews.push(newReview); // Add the review to the POI's reviews array
+        await poi.save();
+
+        res.status(201).json({ message: "Review added successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to add review to POI" });
+    }
+}
 
 module.exports = { 
     createPoi,
     getPoIs,
     getPoI,
     updatePoi,
-    deletePoi
+    deletePoi,
+    addReviewToPoi
 };

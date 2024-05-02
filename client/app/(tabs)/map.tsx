@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import { StyleSheet, View, TextInput, Button, Text, SafeAreaView, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
+import { StyleSheet, View, TextInput, Text, SafeAreaView, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
-import { API_URL, api } from "../context/AuthContext";
-import { AxiosError } from "axios";
 
 import { POI } from "../screens/Poi";
 
@@ -15,28 +13,14 @@ const DEFAULT_REGION = {
     longitudeDelta: 0.0421,
 };
 
-export default function Map({navigation}: {navigation: any}) {
+export default function Map({ navigation, pois }: { navigation: any; pois: POI[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResult, setSearchResult] = useState<null | { name: string; latitude: number; longitude: number; }>(null);
-    const [pois, setPOIs] = useState<POI[]>([]);
     const [poiSuggestions, setPOISuggestions] = useState<POI[]>([]);
     const [containerHeight, setContainerHeight] = useState<number>(0);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const inputRef = useRef<TextInput>(null); // Ref for the TextInput
-
     const mapRef = useRef<MapView>(null);
-
-    useEffect(() => {
-        // Function to make GET request to the server
-        api.get(`${API_URL}/poi/all`)
-            .then(response => {
-                const data = response.data;
-                setPOIs(data); // Set the POIs received from the server
-            })
-            .catch((error: AxiosError) => {
-                console.error("Error fetching POIs:", error);
-            });
-    }, []);
 
     const filterPOIs = (query: string) => {
         if (query === "") {
@@ -49,22 +33,18 @@ export default function Map({navigation}: {navigation: any}) {
         }
     };
 
-    // Function to handle search input change
     const handleSearchInputChange = (query: string) => {
         setSearchQuery(query);
         filterPOIs(query);
         setShowSuggestions(true);
-        
-        // Show all POIs when search bar is clicked
         if (!query) {
             setPOISuggestions(pois);
         }
     };
 
-    // Function to handle POI selection from suggestions
     const handlePOISuggestionPress = (poi: POI) => {
-        setSearchQuery(poi.name); // Set search query to selected POI name
-        setSearchResult(poi); // Set search result to selected POI
+        setSearchQuery(poi.name);
+        setSearchResult(poi);
         mapRef.current?.animateToRegion({
             latitude: poi.latitude,
             longitude: poi.longitude,
@@ -92,25 +72,25 @@ export default function Map({navigation}: {navigation: any}) {
     return (
         <TouchableWithoutFeedback onPress={() => {
             setShowSuggestions(false);
-            inputRef.current?.blur(); // Blur the TextInput
+            inputRef.current?.blur();
         }}>
             <SafeAreaView style={styles.container}>
                 <View 
                     style={styles.searchContainer} 
                     onLayout={(event) => {
                         const { height } = event.nativeEvent.layout;
-                        setContainerHeight(height); // Store the height of the search container
+                        setContainerHeight(height);
                     }}
                 >
                     <FontAwesome name="search" size={20} color="#999" style={styles.searchIcon} />
                     <TextInput
-                        ref={inputRef} // Assign the ref to the TextInput
+                        ref={inputRef}
                         style={styles.searchInput}
                         placeholder="Search..."
                         value={searchQuery}
                         onChangeText={handleSearchInputChange}
                         autoCapitalize="none"
-                        onFocus={() => handleSearchInputChange("")} // Show all locations when search bar is clicked
+                        onFocus={() => handleSearchInputChange("")}
                     />
                 </View>
                 {showSuggestions && renderPOISuggestions()}

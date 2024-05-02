@@ -1,43 +1,68 @@
+import React, { useState, useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Home from "./index";
 import Map from "./map";
 import Lists from "./lists";
 import Settings from "./settings";
-import { Text, TouchableOpacity, StyleSheet } from "react-native"; 
+import { Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { Octicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from 'expo-location';
-import React, { useState, useEffect } from "react";
+import { API_URL, api } from "../context/AuthContext";
+import * as FileSystem from 'expo-file-system';
+
+import { POI } from '../screens/Poi'; 
 
 const Tab = createBottomTabNavigator();
 
-export default function MyTabs() {
+const MyTabs = () => {
     const { onLogout } = useAuth();
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
+    const [pois, setPois] = useState<POI[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== "granted") {
-                setErrorMsg("Permission to access location was denied");
-                return;
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
-        })();
+        preFetchImages();
     }, []);
 
-    let text = "Waiting..";
-    if (errorMsg) {
-        text = errorMsg;
-    } else if (location) {
-        text = JSON.stringify(location);
-    }
+    const preFetchImages = async () => {
+        try {
+            const response = await api.get(`${API_URL}/poi/all`);
+            const fetchedPois = response.data;
+            await downloadAndSaveImages(fetchedPois);
+            setPois(fetchedPois);
+        } catch (error) {
+            console.error("Error fetching POIs:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+
+    const downloadAndSaveImages = async (pois: POI[]) => { // Ensure pois is typed correctly
+        const downloadedImages = await Promise.all(
+            pois.map(async (poi) => {
+                const downloadedImageFileUris = await Promise.all(
+                    poi.images.map(async (imageUrl: string) => { // Assume imageUrl is a string
+                        const fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+                        const destinationUri = `${FileSystem.documentDirectory}${fileName}`;
+                        const exist = await FileSystem.getInfoAsync(destinationUri);
+                        if (!exist.exists) {
+                            const downloadResult = await FileSystem.downloadAsync(
+                                imageUrl,
+                                destinationUri
+                            );
+                            return downloadResult.uri;
+                        }
+                        return destinationUri;
+                    })
+                );
+                return downloadedImageFileUris;
+            })
+        );
+        console.log("Downloaded images:", downloadedImages);
+        return downloadedImages;
+    };
 
     return (
         <Tab.Navigator
@@ -48,24 +73,27 @@ export default function MyTabs() {
         >
             <Tab.Screen
                 name="Home"
-                component={Home}
                 options={{
                     headerShown: false,
                     tabBarIcon: ({ color }) => (
                         <Octicons name="home" size={24} color={color} />
                     ),
                 }}
-            />
+            >
+                {(props) => <Home {...props} pois={pois} loading={loading} />} 
+            </Tab.Screen>
+
             <Tab.Screen
                 name="Map"
-                component={Map}
                 options={{
                     headerShown: false,
                     tabBarIcon: ({ color }) => (
                         <Feather name="map" size={24} color={color} />
                     ),
                 }}
-            />
+            >
+                {(props) => <Map {...props} pois={pois} />} 
+            </Tab.Screen>
             <Tab.Screen
                 name="My Lists"
                 component={Lists}
@@ -94,9 +122,12 @@ export default function MyTabs() {
     );
 }
 
+
 const styles = StyleSheet.create({
     logoutButton: {
         marginRight: 10,
         padding: 8,
     },
 });
+
+export default MyTabs;

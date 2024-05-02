@@ -16,7 +16,15 @@ const getListPois = async (req, res) => {
     try {
         const listId = req.params.id;
 
-        const list = await FavoriteList.findById(listId).populate('pois');
+        const list = await FavoriteList.findById(listId).populate({
+            path: 'pois',
+            populate: { 
+                path: 'reviews',
+                populate: { 
+                    path: 'user',
+                    select: 'firstName lastName' }
+            }
+        });
 
         if (!list) {
             return res.status(404).json({ message: "Favorite list not found" });
