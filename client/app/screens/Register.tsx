@@ -9,14 +9,46 @@ const Register = ({navigation}: {navigation: any}) => {
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [emailError, setEmailError] = useState('');
 
     const handleRegister = async () => {
+        if (!validatePassword(password)) {
+            setPasswordError("Password must contain at least 8 characters, including uppercase and lowercase letters, and at least one number or special character.");
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setEmailError("Please enter a valid email address.");
+            return;
+        }
+
         const response = await onRegister!(firstName, lastName, email, password);
         if (response && response.error) {
             alert(response.message);
         } else {
             navigation.navigate('Login');
         }
+    }
+
+    const validatePassword = (password: string) => {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9\W]).{8,}$/;
+        return passwordRegex.test(password);
+    }
+
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    const handlePasswordChange = (text: string) => {
+        setPassword(text);
+        setPasswordError('');
+    }
+
+    const handleEmailChange = (text: string) => {
+        setEmail(text);
+        setEmailError('');
     }
 
     return (
@@ -38,16 +70,18 @@ const Register = ({navigation}: {navigation: any}) => {
                 <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
-                    onChangeText={setEmail}
+                    onChangeText={handleEmailChange}
                     value={email} 
                     autoCapitalize="none" />
+                {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
                 <Text style={styles.label}>Password</Text>
                 <TextInput
                     style={styles.input}
-                    onChangeText={setPassword}
+                    onChangeText={handlePasswordChange}
                     value={password}
                     secureTextEntry={true} 
                     autoCapitalize="none" />
+                {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={handleRegister} style={styles.button}>
                         <Text style={styles.buttonText}>Sign Up</Text>
@@ -77,13 +111,14 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 18,
         color: '#333',
+        marginBottom: 2,
     },
     input: {
         height: 45,
         borderWidth: 0.5,
         borderRadius: 5,
         padding: 10,
-        marginBottom: 20,
+        marginBottom: 15,
         width: '100%',
     },
     buttonContainer: {
@@ -107,6 +142,10 @@ const styles = StyleSheet.create({
     },
     link: {
         color: '#B68B38',
+    },
+    error: {
+        color: 'red',
+        marginBottom: 10,
     },
 });
 

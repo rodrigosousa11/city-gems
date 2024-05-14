@@ -63,13 +63,14 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 18,
         color: '#333',
+        marginBottom: 2,
     },
     input: {
         height: 45,
         borderWidth: 0.5,
         borderRadius: 5,
         padding: 10,
-        marginBottom: 20,
+        marginBottom: 15,
         width: '100%',
     },
     link: {
