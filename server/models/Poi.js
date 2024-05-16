@@ -18,10 +18,18 @@ const poiSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    location: {
+        type: String,
+        required: true,
+    },
     images: [{
         type: String,
         required: false,
     }],
+    visits: {
+        type: Number,
+        default: 0,
+    },
     reviews: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review',

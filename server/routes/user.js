@@ -5,6 +5,7 @@ const userController = require("../controllers/userController");
 const listController = require("../controllers/listController");
 
 router.get("/me", authenticateToken, userController.getLoggedInUserDetails);
+router.put("/details", authenticateToken, userController.updateUserDetails);
 router.put("/role", authenticateToken, userController.updateUserRole);
 router.get("/lists", authenticateToken, listController.getUserLists);
 router.get("/lists/:id", authenticateToken, listController.getListPois);

@@ -12,6 +12,7 @@ interface ListProps {
 interface POI {
     _id: string;
     name: string;
+    location: string;
 }
 
 const List: React.FC<ListProps> = ({ route, navigation }) => {
@@ -91,7 +92,13 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                 renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => handlePOIPress(item)}>
                         <View style={styles.poiItemContainer}>
-                            <Text style={styles.poiItem}>{item.name}</Text>
+                            <View>
+                                <Text style={styles.poiName}>{item.name}</Text>
+                                <View style={styles.locationContainer}>
+                                    <Ionicons name="location" size={16} color="#555" style={styles.locationIcon} />
+                                    <Text style={styles.locationText}>{item.location}</Text>
+                                </View>
+                            </View>
                             <TouchableOpacity onPress={() => handleDeletePOI(item._id)}>
                                 <MaterialIcons name="delete-outline" size={28} color="black" />
                             </TouchableOpacity>
@@ -99,6 +106,7 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                     </TouchableOpacity>
                 )}
             />
+
             <TouchableOpacity style={styles.addButton} onPress={handleAddPOI}>
                 <Ionicons name="add-circle" size={60} color="#262626" />
             </TouchableOpacity>
@@ -150,6 +158,21 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ccc',
         paddingHorizontal: 15,
         paddingVertical: 15,
+    },
+    poiName: {
+        fontSize: 18,
+        marginBottom: 5,
+    },
+    locationContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    locationIcon: {
+        marginRight: 5,
+    },
+    locationText: {
+        fontSize: 16,
+        color: '#555',
     },
     poiItem: {
         fontSize: 18,

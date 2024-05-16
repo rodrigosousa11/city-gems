@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, Modal, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, Modal, ActivityIndicator, Alert } from "react-native";
 import { AxiosError } from "axios";
 import { API_URL, api } from "../context/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
@@ -15,6 +15,13 @@ export default function Settings() {
     const [longitude, setLongitude] = useState("");
     const [images, setImages] = useState<Array<{ uri: string, url: string }>>([]);
     const [showLoading, setShowLoading] = useState(false);
+    const [editedFirstName, setEditedFirstName] = useState("");
+    const [editedLastName, setEditedLastName] = useState("");
+    const [editedEmail, setEditedEmail] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isEditingPassword, setIsEditingPassword] = useState(false);
 
     useEffect(() => {
         api.get(`${API_URL}/user/me`)
@@ -22,6 +29,9 @@ export default function Settings() {
                 const { user: { firstName, lastName, email, isAdmin } } = response.data;
                 const role = isAdmin ? "Admin" : "User";
                 setUserData({ firstName, lastName, email, role });
+                setEditedFirstName(firstName);
+                setEditedLastName(lastName);
+                setEditedEmail(email);
             })
             .catch((error: AxiosError) => {
                 if (error.isAxiosError && !error.response) {
@@ -31,6 +41,30 @@ export default function Settings() {
                 }
             });
     }, []);
+
+    const updateUserDetails = async () => {
+        try {
+            if (!passwordsMatch()) {
+                return;
+            }
+
+            const userDataToUpdate = {
+                firstName: editedFirstName,
+                lastName: editedLastName,
+                email: editedEmail,
+                currentPassword,
+                newPassword
+            };
+            const response = await api.put(`${API_URL}/user/details`, userDataToUpdate);
+            console.log("User details updated:", response.data);
+            setUserData({ ...userData, firstName: editedFirstName, lastName: editedLastName, email: editedEmail });
+            setCurrentPassword(""); // Clear current password field
+            setNewPassword(""); // Clear new password field
+            setConfirmPassword(""); // Clear confirm password field
+        } catch (error) {
+            console.error("Error updating user details:", error);
+        }
+    };
     
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -112,63 +146,138 @@ export default function Settings() {
         }
     };
     
+    // Function to validate if passwords match
+    const passwordsMatch = () => {
+        if (newPassword !== confirmPassword) {
+            Alert.alert("Passwords do not match");
+            return false;
+        }
+        return true;
+    };
+
+    const togglePasswordEditing = () => {
+        setIsEditingPassword(!isEditingPassword);
+    };
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>{userData.firstName} {userData.lastName}</Text>
-            <Text style={styles.data}>Email: {userData.email}</Text>
-            {userData.role === "Admin" && (
-                <View style={styles.formContainer}>
-                    <Text style={styles.formLabel}>Add a POI</Text>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.container}>
+                <Text style={styles.title}>Account Details</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="First Name"
+                    onChangeText={(text) => setEditedFirstName(text)}
+                    value={editedFirstName}
+                    autoCapitalize="none" />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Last Name"
+                    onChangeText={(text) => setEditedLastName(text)}
+                    value={editedLastName}
+                    autoCapitalize="none" />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    onChangeText={(text) => setEditedEmail(text)}
+                    value={editedEmail}
+                    autoCapitalize="none" />
+                <View style={styles.passwordContainer}>
                     <TextInput
-                        style={styles.input}
-                        placeholder="Name"
-                        onChangeText={(text) => setName(text)}
-                        value={name}
-                        autoCapitalize="none" />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Description"
-                        onChangeText={(text) => setDescription(text)}
-                        value={description}
-                        autoCapitalize="none" />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Latitude"
-                        onChangeText={(text) => setLatitude(text)}
-                        value={latitude}
-                        autoCapitalize="none" />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Longitude"
-                        onChangeText={(text) => setLongitude(text)}
-                        value={longitude}
-                        autoCapitalize="none" />
-                    <Button title="Pick images from gallery" onPress={pickImage} />
-                    <ScrollView horizontal>
-                        {images.map((image, index) => (
-                            <Image key={index} source={{ uri: image.uri }} style={styles.image} />
-                        ))}
-                    </ScrollView>
-                    <Button title="Create POI" onPress={createPOI} />
+                        style={styles.passwordInput}
+                        placeholder="********"
+                        value="********"
+                        secureTextEntry={true}
+                        editable={false}
+                    />
+                    <Button title="Edit" onPress={togglePasswordEditing} />
                 </View>
-            )}
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={showLoading}
-                onRequestClose={() => setShowLoading(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <ActivityIndicator size="large" color="#000000" />
+                {isEditingPassword && (
+                    <View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Current Password"
+                            onChangeText={(text) => setCurrentPassword(text)}
+                            value={currentPassword}
+                            secureTextEntry={true}
+                            autoCapitalize="none" />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="New Password"
+                            onChangeText={(text) => setNewPassword(text)}
+                            value={newPassword}
+                            secureTextEntry={true}
+                            autoCapitalize="none" />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm New Password"
+                            onChangeText={(text) => setConfirmPassword(text)}
+                            value={confirmPassword}
+                            secureTextEntry={true}
+                            autoCapitalize="none" />
                     </View>
-                </View>
-            </Modal>
-        </View>
+                )}
+                <Button title="Update User Details" onPress={updateUserDetails} />
+                {userData.role === "Admin" && (
+                    <View style={styles.formContainer}>
+                        <Text style={styles.title}>Add a POI</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Name"
+                            onChangeText={(text) => setName(text)}
+                            value={name}
+                            autoCapitalize="none" />
+                        <TextInput
+                            style={styles.descriptionInput}
+                            placeholder="Description"
+                            onChangeText={(text) => setDescription(text)}
+                            value={description}
+                            autoCapitalize="none"
+                            multiline={true}
+                            numberOfLines={6}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Latitude"
+                            onChangeText={(text) => setLatitude(text)}
+                            value={latitude}
+                            autoCapitalize="none" />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Longitude"
+                            onChangeText={(text) => setLongitude(text)}
+                            value={longitude}
+                            autoCapitalize="none" />
+                        <Button title="Pick images from gallery" onPress={pickImage} />
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            {images.map((image, index) => (
+                                <Image key={index} source={{ uri: image.uri }} style={styles.image} />
+                            ))}
+                        </ScrollView>
+                        <Button title="Create POI" onPress={createPOI} />
+                    </View>
+                )}
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={showLoading}
+                    onRequestClose={() => setShowLoading(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <ActivityIndicator size="large" color="#000000" />
+                        </View>
+                    </View>
+                </Modal>
+            </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
+    scrollContainer: {
+        flexGrow: 1,
+        justifyContent: 'center',
+    },
     container: {
         flex: 1,
         padding: 15,
@@ -189,16 +298,22 @@ const styles = StyleSheet.create({
         height: 100,
         marginRight: 10,
     },
-    formLabel: {
-        fontSize: 20,
-        marginBottom: 10,
-    },
     input: {
         borderWidth: 1,
         borderColor: "#7d7d7d",
         borderRadius: 5,
         padding: 10,
         marginBottom: 10,
+        textAlignVertical: 'top',
+    },
+    descriptionInput: {
+        borderWidth: 1,
+        borderColor: "#7d7d7d",
+        borderRadius: 5,
+        padding: 10,
+        height: 140,
+        marginBottom: 10,
+        textAlignVertical: 'top', 
     },
     modalContainer: {
         flex: 1,
@@ -210,5 +325,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 20,
         borderRadius: 15,
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    passwordInput: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: "#7d7d7d",
+        borderRadius: 5,
+        padding: 10,
+        marginRight: 10,
     },
 });

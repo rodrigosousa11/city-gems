@@ -35,7 +35,7 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({ visible, onClose, onSub
                         placeholder="Write a review..."
                         style={styles.input}
                         multiline
-                        numberOfLines={4}  // Define o número de linhas
+                        numberOfLines={4} 
                     />
                     <Text style={styles.modalText}>Select Rating:</Text>
                     <View style={styles.stars}>
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     },
     modalView: {
         backgroundColor: 'white',
@@ -71,15 +71,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-        width: '85%', // Control the size of the modal
-        maxWidth: 400 // Ensure it doesn't get too large on big screens
+        width: '85%', 
+        maxWidth: 400 
     },
     modalText: {
         fontSize: 18,
     },
     input: {
         fontSize: 16,
-        height: 140, // Aumentado para acomodar mais texto
+        height: 140, 
         width: '100%',
         borderColor: 'gray',
         borderWidth: 1,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 10,
         paddingHorizontal: 10,
-        textAlignVertical: 'top', // Garante que o texto comece de cima para baixo
+        textAlignVertical: 'top', 
     },
     star: {
         fontSize: 30,

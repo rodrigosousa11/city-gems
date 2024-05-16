@@ -1,3 +1,4 @@
+const axios = require('axios');
 const POI = require('../models/Poi');
 const Review = require('../models/Review');
 
@@ -5,22 +6,34 @@ const createPoi = async (req, res) => {
     try {
         const { name, description, latitude, longitude, images } = req.body;
 
+        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+
+        if (response.status !== 200 || !response.data.address) {
+            throw new Error('Failed to fetch location data');
+        }
+
+        const { city, county } = response.data.address;
+        const location = `${city}, ${county}`;
+
         const newPoi = new POI({
             name,
             description,
             latitude,
             longitude,
+            location,
             images
         });
 
         await newPoi.save();
 
+        console.log(response.data.address)
         res.status(201).json({ message: "POI created successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to create POI" });
     }
 }
+
 
 const getPoIs = async (req, res) => {
     try {
@@ -122,7 +135,8 @@ const addReviewToPoi = async (req, res) => {
 
         await newReview.save();
 
-        poi.reviews.push(newReview); // Add the review to the POI's reviews array
+        poi.reviews.push(newReview);
+        poi.visits += 1;
         await poi.save();
 
         res.status(201).json({ message: "Review added successfully", review: newReview });

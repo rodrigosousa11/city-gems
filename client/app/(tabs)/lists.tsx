@@ -120,10 +120,10 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
         paddingHorizontal: 15,
-        paddingVertical: 15,
+        paddingVertical: 20,
     },
     listItem: {
-        fontSize: 18,
+        fontSize: 19,
     },
     addButton: {
         position: 'absolute',
