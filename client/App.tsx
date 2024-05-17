@@ -4,11 +4,11 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "./app/screens/Login";
 import Register from "./app/screens/Register";
 import Index from "./app/screens/Index";
-import POIDetails from "./app/screens/Poi";
+import POIDetails, { POI } from "./app/screens/Poi";
 import MyTabs from "./app/(tabs)/_layout";
 import List from "./app/screens/List";
-
-import { POI } from './app/screens/Poi';
+import MostVisitedLocations from "./app/components/MostVisitedLocations";
+import NearbyLocations from "./app/components/NearbyLocations";
 
 type RootStackParamList = {
     MyTabs: undefined;
@@ -19,6 +19,8 @@ type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     List: { name: string } | undefined;
+    MostVisitedLocations: undefined; // Added MostVisitedLocations
+    NearbyLocations: undefined; // Added NearbyLocations
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -26,7 +28,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
     return (
         <AuthProvider>
-            <Layout></Layout>
+            <Layout />
         </AuthProvider>
     );
 }
@@ -40,7 +42,7 @@ export const Layout = () => {
                 screenOptions={{
                     headerBackTitleVisible: false, 
                 }}
-                >
+            >
                 {authState?.authenticated ? (
                     <>
                         <Stack.Screen
@@ -64,12 +66,20 @@ export const Layout = () => {
                                 title: route.params?.name || 'My list' 
                             })}
                         />
+                        <Stack.Screen 
+                            name="MostVisitedLocations" 
+                            component={MostVisitedLocations} 
+                        />
+                        <Stack.Screen 
+                            name="NearbyLocations" 
+                            component={NearbyLocations} 
+                        />
                     </>
                 ) : (
                     <>
                         <Stack.Screen name="Index" component={Index} options={{ headerShown: false }} />
                         <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-                        <Stack.Screen name="Register" component={Register}  options={{ headerShown: false }} />
+                        <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
                     </>
                 )}
             </Stack.Navigator>

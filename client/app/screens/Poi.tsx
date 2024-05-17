@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Button } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Button, Linking, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
+import * as Location from 'expo-location';
 import { API_URL, api } from '../context/AuthContext';
 import AddReviewModal from '../components/ReviewModal';
 import WeatherComponent from '../components/WeatherComponent';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
+import AddToListModal from '../components/AddToListModal';
+import { List } from '../(tabs)/lists';
 
 export interface User {
     _id: string;
@@ -55,10 +58,13 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
     const [displayedReviewsCount, setDisplayedReviewsCount] = useState<number>(5);
     const [allReviewsLoaded, setAllReviewsLoaded] = useState<boolean>(false);
     const [humidity, setHumidity] = useState<number>(0);
+    const [lists, setLists] = useState<List[]>([]);
+    const [isAddToListModalVisible, setIsAddToListModalVisible] = useState<boolean>(false);
 
     useEffect(() => {
         fetchReviews();
         fetchWeatherData();
+        fetchLists();
     }, [route.params.poi._id]);
 
     const fetchReviews = async () => {
@@ -73,6 +79,19 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
         } catch (error) {
             console.error("Error fetching reviews:", error);
         }
+    };
+
+    const fetchLists = async () => {
+        try {
+            const response = await api.get(`${API_URL}/user/lists`);
+            setLists(response.data);
+        } catch (error) {
+            console.error("Error fetching lists:", error);
+        }
+    };
+
+    const openAddToListModal = () => {
+        setIsAddToListModalVisible(true);
     };
 
     const fetchWeatherData = async () => {
@@ -100,19 +119,15 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
             });
             console.log("Review added:", response.data);
     
-            // Ensure the response has the expected structure
             if (response.data && response.data.review) {
                 const updatedReviewsResponse = await api.get(`${API_URL}/poi/get/${poi._id}`);
                 console.log("Updated reviews:", updatedReviewsResponse.data.reviews);
     
-                // Check if the updated reviews response has the expected structure
                 if (updatedReviewsResponse.data && Array.isArray(updatedReviewsResponse.data.reviews)) {
-                    // Find the newly added review in the updated reviews list to ensure it has user data
                     const newReview = updatedReviewsResponse.data.reviews.find(
                         (review: Review) => review._id === response.data.review._id
                     );
 
-                    // Update the reviews state with the newly added review including the user data
                     if (newReview) {
                         setReviews(prevReviews => [newReview, ...prevReviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
                         setNewReview('');
@@ -129,7 +144,6 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
             console.error("Error adding review:", error);
         }
     };
-    
     
     const calculateAverageRating = () => {
         const total = reviews.reduce((acc, review) => acc + review.rating, 0);
@@ -167,14 +181,22 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
                     </View>
                 ))}
             </PagerView>
-    
             <View style={styles.contentContainer}>
-                <Text style={styles.title}>{poi.name}</Text>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>{poi.name}</Text>
+                    <TouchableOpacity style={styles.addButton} onPress={() => openAddToListModal()}>
+                        <Ionicons name="add-circle-outline" size={42} color="#000" />
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.locationContainer}>
                     <Ionicons name="location" size={16} color="#555" style={styles.locationIcon} />
                     <Text style={styles.locationText}>{poi.location}</Text>
                 </View>
                 <Text style={styles.description}>{poi.description}</Text>
+                <TouchableOpacity style={styles.button} onPress={openGoogleMaps}>
+                    <Ionicons name="navigate" size={20} color="#000" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Get Directions</Text>
+                </TouchableOpacity>
                 <Text style={styles.subtitle}>Weather</Text>
                 <WeatherComponent loading={loadingWeather} weatherDescription={weather} temperature={temperature} humidity={humidity} />
                 {reviews.length > 0 && (
@@ -187,39 +209,77 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
         </View>
     );
     
+    
+    const openGoogleMaps = async () => {
+        Alert.alert(
+            'Location Permission',
+            'We need to access your location to provide directions to the POI.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'OK',
+                    onPress: async () => {
+                        const { status } = await Location.requestForegroundPermissionsAsync();
+                        if (status !== 'granted') {
+                            console.error("Permission to access location was denied");
+                            return;
+                        }
 
+                        const location = await Location.getCurrentPositionAsync({});
+                        const userLatitude = location.coords.latitude;
+                        const userLongitude = location.coords.longitude;
+
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${userLatitude},${userLongitude}&destination=${poi.latitude},${poi.longitude}&travelmode=driving`;
+                        Linking.openURL(url);
+                    }
+                }
+            ]
+        );
+    };
 
     const renderFooter = () => {
         return (
             <View style={styles.reviewSubmissionContainer}>
                 {reviews.length > 0 && (
                     <TouchableOpacity
-                    style={styles.loadMoreButton}
-                    onPress={() => {
-                        if (allReviewsLoaded) {
-                            setDisplayedReviewsCount(5);
-                            setAllReviewsLoaded(false);
-                        } else {
-                            setDisplayedReviewsCount(prevCount => {
-                                const newCount = prevCount + 5;
-                                if (newCount >= reviews.length) {
-                                    setAllReviewsLoaded(true);
-                                }
-                                return newCount;
-                            });
-                        }
-                    }}
-                >
-                    <Text style={styles.loadMoreButtonText}>
-                        {allReviewsLoaded ? "See less reviews ▲" : "See more reviews ▼"}
-                    </Text>
-                </TouchableOpacity>
+                        style={styles.loadMoreButton}
+                        onPress={() => {
+                            if (allReviewsLoaded) {
+                                setDisplayedReviewsCount(5);
+                                setAllReviewsLoaded(false);
+                            } else {
+                                setDisplayedReviewsCount(prevCount => {
+                                    const newCount = prevCount + 5;
+                                    if (newCount >= reviews.length) {
+                                        setAllReviewsLoaded(true);
+                                    }
+                                    return newCount;
+                                });
+                            }
+                        }}
+                    >
+                        <Text style={styles.loadMoreButtonText}>
+                            {allReviewsLoaded ? "See less reviews ▲" : "See more reviews ▼"}
+                        </Text>
+                    </TouchableOpacity>
                 )}
-                <Button color="black" title="Add a Review" onPress={() => setIsModalVisible(true)} />
+                <TouchableOpacity style={styles.addReviewButton} onPress={() => setIsModalVisible(true)}>
+                    <Text style={styles.addReviewButtonText}>Add a Review</Text>
+                </TouchableOpacity>
                 <AddReviewModal
                     visible={isModalVisible}
                     onClose={() => setIsModalVisible(false)}
                     onSubmit={handleAddReview}
+                />
+                <AddToListModal
+                    visible={isAddToListModalVisible}
+                    onClose={() => setIsAddToListModalVisible(false)}
+                    poi={poi}
+                    existingLists={lists}
+                    refreshLists={fetchLists}
                 />
             </View>
         );
@@ -227,7 +287,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
 
     return (
         <FlatList
-        data={reviews.slice(0, displayedReviewsCount)}
+            data={reviews.slice(0, displayedReviewsCount)}
             ListHeaderComponent={renderHeader}
             renderItem={({ item }) => (
                 <View style={styles.reviewItem}>
@@ -242,7 +302,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
                     <Text style={styles.comment}>{item.comment}</Text>
                     <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
                 </View>
-            )}            
+            )}
             ListEmptyComponent={renderEmptyList}
             ListFooterComponent={renderFooter}
             keyExtractor={(item, index) => item._id + index}
@@ -266,6 +326,11 @@ const styles = StyleSheet.create({
     contentContainer: {
         paddingHorizontal: 12,
     },
+    titleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
     title: {
         fontSize: 26,
         fontWeight: 'bold',
@@ -273,7 +338,6 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        marginBottom: 15,
     },
     reviews: {
         fontSize: 18,
@@ -313,6 +377,9 @@ const styles = StyleSheet.create({
     },
     reviewSubmissionContainer: {
         paddingBottom: 30,
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        alignItems: 'center',
     },
     carouselImage: {
         width: '100%',
@@ -344,11 +411,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'black',
     },
-    imagesIndicator: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-    },
     locationContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -362,6 +424,40 @@ const styles = StyleSheet.create({
     locationIcon: {
         marginRight: 5,
     },
+    button: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderColor: '#000',
+        borderWidth: 1,
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 15,
+        backgroundColor: 'transparent',
+    },
+    buttonIcon: {
+        marginRight: 5,
+    },
+    buttonText: {
+        color: '#000',
+        fontSize: 16,
+    },
+    addReviewButton: {
+        backgroundColor: '#28a745',
+        borderRadius: 5,
+        padding: 10,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    addReviewButtonText: {
+        color: '#fff',
+        fontSize: 16,
+    },
+    addButton: {
+        marginLeft: 'auto',
+    },
+    addIcon: {
+        backgroundColor: 'transparent',
+    }
 });
 
 export default POIDetails;

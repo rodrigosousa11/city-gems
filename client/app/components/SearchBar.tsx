@@ -4,7 +4,7 @@ import { FontAwesome } from '@expo/vector-icons';
 
 interface SearchBarProps {
     onSearch: (query: string) => void;
-    inputRef: React.RefObject<TextInput>; // Correct interface declaration
+    inputRef: React.RefObject<TextInput>; 
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch, inputRef }) => {
@@ -34,12 +34,13 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 20,
+        paddingHorizontal: 30,
         paddingTop: 7,
         paddingBottom: 7,
         backgroundColor: "white",
         borderBottomWidth: 1,
         borderBottomColor: "#ddd",
+        borderRadius: 15, 
     },
     searchIcon: {
         marginRight: 10,

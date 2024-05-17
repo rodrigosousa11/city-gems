@@ -108,7 +108,7 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
             />
 
             <TouchableOpacity style={styles.addButton} onPress={handleAddPOI}>
-                <Ionicons name="add-circle" size={60} color="#262626" />
+                <Ionicons name="add-circle-outline" size={60} color="#262626" />
             </TouchableOpacity>
             <Modal
                 animationType="fade"
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     },
     addButton: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 40,
         right: 20,
         width: 60,
         height: 60,

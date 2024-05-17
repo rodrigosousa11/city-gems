@@ -1,22 +1,19 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Modal, Button } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Button } from "react-native";
 import { API_URL, api } from "../context/AuthContext";
-import React, { useState, useEffect } from "react";
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
-interface List {
+export interface List {
     _id: string;
     name: string;
 }
 
-export default function Lists({navigation}: {navigation: any}) {
+export default function Lists({ navigation }: { navigation: any }) {
     const [lists, setLists] = useState<List[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [newListName, setNewListName] = useState('');
-
-    useEffect(() => {
-        fetchLists();
-    }, []);
 
     const fetchLists = async () => {
         try {
@@ -26,6 +23,12 @@ export default function Lists({navigation}: {navigation: any}) {
             console.error("Error fetching lists:", error);
         }
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchLists();
+        }, [])
+    );
 
     const renderItem = ({ item }: { item: List }) => (
         <TouchableOpacity onPress={() => handleListPress(item)}>
@@ -48,7 +51,7 @@ export default function Lists({navigation}: {navigation: any}) {
     const handleDeleteList = async (listId: string) => {
         try {
             await api.delete(`${API_URL}/user/list/${listId}`);
-            setLists(lists.filter(list => list._id !== listId));
+            fetchLists(); // Refresh lists after deletion
         } catch (error) {
             console.error("Error deleting list:", error);
         }
@@ -61,10 +64,9 @@ export default function Lists({navigation}: {navigation: any}) {
     const addList = async () => {
         try {
             const response = await api.post(`${API_URL}/user/list`, { name: newListName });
-            const newList = response.data;
-            setLists([...lists, newList]);
             setModalVisible(false);
             setNewListName('');
+            fetchLists(); // Refresh lists after adding a new list
         } catch (error) {
             console.error("Error creating list:", error);
         }
@@ -79,7 +81,7 @@ export default function Lists({navigation}: {navigation: any}) {
                 contentContainerStyle={{ flexGrow: 1 }}
             />
             <TouchableOpacity style={styles.addButton} onPress={handleAddList}>
-                <Ionicons name="add-circle" size={60} color="#262626" />
+                <Ionicons name="add-circle-outline" size={60} color="#262626" />
             </TouchableOpacity>
             <Modal
                 animationType="fade"
@@ -91,11 +93,12 @@ export default function Lists({navigation}: {navigation: any}) {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
+                        <Text style={styles.modalText}>Enter List Name</Text>
                         <TextInput
                             style={styles.input}
                             onChangeText={setNewListName}
                             value={newListName}
-                            placeholder="Enter list name"
+                            placeholder="(e.g. holiday)"
                         />
                         <View style={styles.modalButtons}>
                             <Button title="Cancel" onPress={() => setModalVisible(false)} />
@@ -146,6 +149,10 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 10,
         elevation: 5,
+    },
+    modalText: {
+        fontSize: 20,
+        marginBottom: 10,
     },
     input: {
         height: 40,

@@ -38,9 +38,9 @@ export default function Map({ navigation }: { navigation: any }) {
     }, []);
 
     const handleOutsideClick = () => {
-        setShowSuggestions(false); // Hide suggestions
+        setShowSuggestions(false);
         if (searchInputRef.current) {
-            (searchInputRef.current as TextInput).blur(); // Type assertion
+            (searchInputRef.current as TextInput).blur(); 
         }
     };
 
@@ -95,7 +95,9 @@ export default function Map({ navigation }: { navigation: any }) {
     return (
         <TouchableWithoutFeedback onPress={handleOutsideClick}>
             <SafeAreaView style={styles.container}>
-                <SearchBar onSearch={handleSearchInputChange} inputRef={searchInputRef} />
+                <View style={styles.searchBarContainer}>
+                    <SearchBar onSearch={handleSearchInputChange} inputRef={searchInputRef} />
+                </View>
                 {showSuggestions && renderPOISuggestions()}
                 <MapView
                     ref={mapRef}
@@ -139,6 +141,9 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    searchBarContainer: {
+        marginHorizontal: 7,
     },
     searchContainer: {
         flexDirection: "row",
