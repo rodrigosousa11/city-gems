@@ -25,10 +25,12 @@ const userSchema = new mongoose.Schema({
 	refreshTokens: [{
         type: String,
     }],
-	favoriteLists: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'FavoriteList',
-    }],
+    resetPasswordToken: {
+        type: String,
+    },
+    resetPasswordExpires: {
+        type: Date,
+    },
 });
 
 const User = mongoose.model("User", userSchema);

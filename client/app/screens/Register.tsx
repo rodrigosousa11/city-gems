@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from '@react-navigation/native';
 
-const Register = ({navigation}: {navigation: any}) => {
+const Register = ({ navigation }: { navigation: any }) => {
     const { onRegister } = useAuth();
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
@@ -59,35 +59,41 @@ const Register = ({navigation}: {navigation: any}) => {
                 <TextInput
                     style={styles.input}
                     onChangeText={setFirstName}
-                    value={firstName} 
-                    autoCapitalize="none" />
+                    value={firstName}
+                    autoCapitalize="none"
+                />
                 <Text style={styles.label}>Last Name</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={setLastName}
-                    value={lastName} 
-                    autoCapitalize="none" />
+                    value={lastName}
+                    autoCapitalize="none"
+                />
                 <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={handleEmailChange}
-                    value={email} 
-                    autoCapitalize="none" />
+                    value={email}
+                    autoCapitalize="none"
+                />
                 {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
                 <Text style={styles.label}>Password</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={handlePasswordChange}
                     value={password}
-                    secureTextEntry={true} 
-                    autoCapitalize="none" />
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                />
                 {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={handleRegister} style={styles.button}>
                         <Text style={styles.buttonText}>Sign Up</Text>
                     </TouchableOpacity>
-                    <Text style={styles.linkText}>Have an account already? <Link to={{ screen: 'Login' }} style={styles.link}>Sign In</Link></Text>
                 </View>
+            </View>
+            <View style={styles.footer}>
+                <Text style={styles.linkText}>Have an account already? <Link to={{ screen: 'Login' }} style={styles.link}>Sign In</Link></Text>
             </View>
         </View>
     );
@@ -99,6 +105,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f5f5f5',
+        position: 'relative',
     },
     title: {
         fontSize: 28,
@@ -112,6 +119,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#333',
         marginBottom: 2,
+        alignSelf: 'flex-start',
     },
     input: {
         height: 45,
@@ -122,15 +130,17 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     buttonContainer: {
+        width: '100%',
         alignItems: 'center',
+        marginTop: 10,
     },
     button: {
-        width: "100%",
+        width: '100%',
         borderRadius: 8,
         height: 50,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#1E232C",
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1E232C',
         marginBottom: 12,
     },
     buttonText: {
@@ -139,15 +149,20 @@ const styles = StyleSheet.create({
     },
     linkText: {
         fontSize: 16,
+        textAlign: 'center',
     },
     link: {
         color: '#B68B38',
     },
     error: {
         color: 'red',
-        marginBottom: 10,
+        marginBottom: 15,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 40,
+        alignItems: 'center',
     },
 });
-
 
 export default Register;

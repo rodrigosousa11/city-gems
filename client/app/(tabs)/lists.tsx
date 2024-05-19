@@ -51,7 +51,7 @@ export default function Lists({ navigation }: { navigation: any }) {
     const handleDeleteList = async (listId: string) => {
         try {
             await api.delete(`${API_URL}/user/list/${listId}`);
-            fetchLists(); // Refresh lists after deletion
+            fetchLists(); 
         } catch (error) {
             console.error("Error deleting list:", error);
         }
@@ -66,7 +66,7 @@ export default function Lists({ navigation }: { navigation: any }) {
             const response = await api.post(`${API_URL}/user/list`, { name: newListName });
             setModalVisible(false);
             setNewListName('');
-            fetchLists(); // Refresh lists after adding a new list
+            fetchLists(); 
         } catch (error) {
             console.error("Error creating list:", error);
         }

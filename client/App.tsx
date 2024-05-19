@@ -9,8 +9,10 @@ import MyTabs from "./app/(tabs)/_layout";
 import List from "./app/screens/List";
 import MostVisitedLocations from "./app/components/MostVisitedLocations";
 import NearbyLocations from "./app/components/NearbyLocations";
+import PasswordRecovery from "./app/screens/PasswordRecovery";
+import VerifyCodeScreen from "./app/screens/VerifyCodeScreen"; 
 
-type RootStackParamList = {
+export type RootStackParamList = {
     MyTabs: undefined;
     POIDetails: {
         poi: POI;
@@ -19,8 +21,11 @@ type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     List: { name: string } | undefined;
-    MostVisitedLocations: undefined; // Added MostVisitedLocations
-    NearbyLocations: undefined; // Added NearbyLocations
+    MostVisitedLocations: undefined;
+    NearbyLocations: undefined;
+    PasswordRecovery: undefined;
+    ResetPassword: { token: string };
+    VerifyCode: { email: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,7 +40,7 @@ export default function App() {
 
 export const Layout = () => {
     const { authState } = useAuth();
-    
+
     return (
         <NavigationContainer>
             <Stack.Navigator
@@ -80,6 +85,8 @@ export const Layout = () => {
                         <Stack.Screen name="Index" component={Index} options={{ headerShown: false }} />
                         <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
                         <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
+                        <Stack.Screen name="PasswordRecovery" component={PasswordRecovery} options={{ headerShown: false }} />
+                        <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} options={{ headerShown: false }} />
                     </>
                 )}
             </Stack.Navigator>

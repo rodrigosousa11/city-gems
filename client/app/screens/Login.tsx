@@ -3,19 +3,20 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from '@react-navigation/native';
 
-const Login = ({navigation}: {navigation: any}) => {
+const Login = ({ navigation }: { navigation: any }) => {
     const { onLogin } = useAuth();
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
+    const [Error, setError] = useState('');
 
     const handleLogin = async () => {
         const response = await onLogin!(email, password);
         if (response && response.error) {
-            alert(response.message);
+            setError(response.message + '!');
         } else {
             navigation.navigate('MyTabs');
         }
-    }
+    };
 
     return (
         <View style={styles.container}>
@@ -25,21 +26,31 @@ const Login = ({navigation}: {navigation: any}) => {
                 <TextInput
                     style={styles.input}
                     onChangeText={setEmail}
-                    value={email} 
-                    autoCapitalize="none" />
+                    value={email}
+                    autoCapitalize="none"
+                />
                 <Text style={styles.label}>Password</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={setPassword}
                     value={password}
-                    autoCapitalize="none" 
-                    secureTextEntry={true} />
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={handleLogin} style={styles.button}>
-                        <Text style={styles.buttonText}>Sign In</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.linkText}>Not a member? <Link to={{ screen: 'Register' }} style={styles.link}>Sign Up</Link></Text>
+                    autoCapitalize="none"
+                    secureTextEntry={true}
+                />
+                {Error ? <Text style={styles.error}>{Error}</Text> : null}
+                <TouchableOpacity onPress={handleLogin} style={styles.button}>
+                    <Text style={styles.buttonText}>Sign In</Text>
+                </TouchableOpacity>
+                <View style={styles.linkContainer}>
+                    <Text style={styles.linkText}>
+                        <Link to={{ screen: 'PasswordRecovery' }} style={styles.link}>Forgot your password?</Link>
+                    </Text>
                 </View>
+            </View>
+            <View style={styles.footer}>
+                <Text style={styles.linkText}>
+                    Not a member? <Link to={{ screen: 'Register' }} style={styles.link}>Sign Up</Link>
+                </Text>
             </View>
         </View>
     );
@@ -51,6 +62,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f5f5f5',
+        position: 'relative',
     },
     title: {
         fontSize: 28,
@@ -76,16 +88,19 @@ const styles = StyleSheet.create({
     link: {
         color: '#B68B38',
     },
-    buttonContainer: {
-        alignItems: 'center',
+    linkContainer: {
+        width: '100%',
+        alignItems: 'flex-end',
+        marginTop: 5,
+        paddingEnd: 5,
     },
     button: {
-        width: "100%",
+        width: '100%',
         borderRadius: 8,
         height: 50,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#1E232C",
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1E232C',
         marginBottom: 12,
     },
     buttonText: {
@@ -94,6 +109,15 @@ const styles = StyleSheet.create({
     },
     linkText: {
         fontSize: 16,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 40,
+        alignItems: 'center',
+    },
+    error: {
+        color: 'red',
+        marginBottom: 15,
     },
 });
 
