@@ -10,6 +10,7 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import AddToListModal from '../components/AddToListModal';
 import { List } from '../(tabs)/lists';
+import EditPoiModal from '../components/EditPoiModal';
 
 export interface User {
     _id: string;
@@ -45,10 +46,12 @@ type POIStackParamList = {
 
 type POIDetailsProps = {
     route: RouteProp<POIStackParamList, 'POIDetails'>;
+    navigation: any;
 };
 
-const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
-    const { poi } = route.params;
+const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
+    const { poi: initialPoi } = route.params;
+    const [poi, setPoi] = useState<POI>(initialPoi);
     const [weather, setWeather] = useState<string>('');
     const [temperature, setTemperature] = useState<number>(0);
     const [reviews, setReviews] = useState<Review[]>([...poi.reviews].reverse());
@@ -60,12 +63,34 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
     const [humidity, setHumidity] = useState<number>(0);
     const [lists, setLists] = useState<List[]>([]);
     const [isAddToListModalVisible, setIsAddToListModalVisible] = useState<boolean>(false);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
 
     useEffect(() => {
+        fetchUserDetails();
         fetchReviews();
         fetchWeatherData();
         fetchLists();
     }, [route.params.poi._id]);
+
+    const fetchPOIDetails = async () => {
+        try {
+            const response = await api.get(`${API_URL}/poi/get/${route.params.poi._id}`);
+            setPoi(response.data);
+            setReviews(response.data.reviews.reverse());
+        } catch (error) {
+            console.error("Error fetching POI details:", error);
+        }
+    };
+
+    const fetchUserDetails = async () => {
+        try {
+            const response = await api.get(`${API_URL}/user/me`);
+            setIsAdmin(response.data.user.isAdmin);
+        } catch (error) {
+            console.error("Error fetching user details:", error);
+        }
+    };
 
     const fetchReviews = async () => {
         try {
@@ -80,6 +105,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
             console.error("Error fetching reviews:", error);
         }
     };
+    
 
     const fetchLists = async () => {
         try {
@@ -145,6 +171,29 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
         }
     };
     
+    const handleDeleteReview = async (reviewId: string) => {
+        try {
+            await api.delete(`${API_URL}/poi/${poi._id}/review/${reviewId}`);
+            setReviews(reviews.filter(review => review._id !== reviewId));
+        } catch (error) {
+            console.error("Error deleting review:", error);
+        }
+    };
+
+    const handleDeletePOI = async () => {
+        try {
+            await api.delete(`${API_URL}/poi/delete/${poi._id}`);
+            Alert.alert("POI deleted successfully");
+            navigation.goBack();
+        } catch (error) {
+            console.error("Error deleting POI:", error);
+        }
+    };
+
+    const openEditModal = () => {
+        setIsEditModalVisible(true);
+    };
+
     const calculateAverageRating = () => {
         const total = reviews.reduce((acc, review) => acc + review.rating, 0);
         return reviews.length > 0 ? (total / reviews.length) : 0;
@@ -171,16 +220,18 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
 
     const renderHeader = () => (
         <View style={styles.container}>
-            <PagerView
-                style={styles.pagerView}
-                initialPage={0}
-            >
+            <PagerView style={styles.pagerView} initialPage={0}>
                 {poi.images.map((image, index) => (
                     <View style={styles.page} key={index}>
                         <Image source={{ uri: image }} style={styles.carouselImage} />
                     </View>
                 ))}
             </PagerView>
+            <View style={styles.indicatorContainer}>
+                {poi.images.map((_, index) => (
+                    <View key={index} style={styles.indicatorLine} />
+                ))}
+            </View>
             <View style={styles.contentContainer}>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>{poi.name}</Text>
@@ -281,6 +332,18 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
                     existingLists={lists}
                     refreshLists={fetchLists}
                 />
+                {isAdmin && (
+                    <View>
+                        <Button title="Edit POI" onPress={openEditModal} />
+                        <Button title="Delete POI" onPress={handleDeletePOI} color="red" />
+                    </View>
+                )}
+                <EditPoiModal
+                        visible={isEditModalVisible}
+                        onClose={() => setIsEditModalVisible(false)}
+                        poi={poi}
+                        onPoiEdited={fetchPOIDetails}
+                />
             </View>
         );
     };
@@ -301,6 +364,11 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route }) => {
                     </View>
                     <Text style={styles.comment}>{item.comment}</Text>
                     <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
+                    {isAdmin && (
+                        <TouchableOpacity onPress={() => handleDeleteReview(item._id)} style={styles.deleteReviewButton}>
+                            <Text style={styles.deleteReviewText}>Delete Review</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
             ListEmptyComponent={renderEmptyList}
@@ -322,6 +390,23 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
+    },
+    carouselImage: {
+        width: '100%',
+        height: 300,
+    },
+    indicatorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10, 
+        marginTop: -10,
+    },
+    indicatorLine: {
+        width: 20,
+        height: 2,
+        backgroundColor: '#666',
+        marginHorizontal: 2,
     },
     contentContainer: {
         paddingHorizontal: 12,
@@ -370,7 +455,7 @@ const styles = StyleSheet.create({
     date: {
         color: '#666',
         alignSelf: 'flex-end',
-        marginTop: 5, 
+        marginTop: 5,
     },
     ratingContainer: {
         flexDirection: 'row',
@@ -380,10 +465,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 10,
         alignItems: 'center',
-    },
-    carouselImage: {
-        width: '100%',
-        height: 300,
     },
     emptyListContainer: {
         flex: 1,
@@ -403,7 +484,7 @@ const styles = StyleSheet.create({
     loadMoreButton: {
         borderRadius: 5,
         textAlign: 'center',
-        backgroundColor: 'transparent', 
+        backgroundColor: 'transparent',
         paddingBottom: 15,
     },
     loadMoreButtonText: {
@@ -442,14 +523,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     addReviewButton: {
-        backgroundColor: '#28a745',
         borderRadius: 5,
         padding: 10,
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 5,
+        borderWidth: 1,
+        marginBottom: 20,
     },
     addReviewButtonText: {
-        color: '#fff',
+        color: '#000',
         fontSize: 16,
     },
     addButton: {
@@ -457,7 +539,15 @@ const styles = StyleSheet.create({
     },
     addIcon: {
         backgroundColor: 'transparent',
-    }
+    },
+    deleteReviewButton: {
+        alignSelf: 'flex-start',
+    },
+    deleteReviewText: {
+        color: 'red',
+        fontSize: 14,
+    },
 });
+
 
 export default POIDetails;

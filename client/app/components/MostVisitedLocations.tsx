@@ -1,31 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Image } from "react-native";
-import { API_URL, api } from "../context/AuthContext";
+import React from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '../../App';
 import { POI } from "../screens/Poi";
 
-const MostVisitedLocations = ({ navigation }: { navigation: any }) => {
-    const [pois, setPois] = useState<POI[]>([]);
-    const [loading, setLoading] = useState(true);
+type MostVisitedLocationsRouteProp = RouteProp<RootStackParamList, 'MostVisitedLocations'>;
 
-    useEffect(() => {
-        const fetchPOIs = async () => {
-            try {
-                const response = await api.get(`${API_URL}/poi/all`);
-                const fetchedPois = response.data;
-                // Sort POIs by visit count in descending order
-                const sortedPois = fetchedPois.sort((a: POI, b: POI) => b.visits - a.visits);
-                // Take the top 10 POIs
-                const top10Pois = sortedPois.slice(0, 10);
-                setPois(top10Pois);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching POIs:", error);
-                setLoading(false);
-            }
-        };
+interface MostVisitedLocationsProps {
+    navigation: any;
+}
 
-        fetchPOIs();
-    }, []);
+const MostVisitedLocations = ({ navigation }: MostVisitedLocationsProps) => {
+    const route = useRoute<MostVisitedLocationsRouteProp>();
+    const { pois } = route.params;
+
+    const sortedPois = [...pois].sort((a, b) => b.visits - a.visits);
 
     const navigateToPoi = (poi: POI) => {
         navigation.navigate("POIDetails", { poi });
@@ -33,23 +22,19 @@ const MostVisitedLocations = ({ navigation }: { navigation: any }) => {
 
     return (
         <View style={styles.container}>
-            {loading ? (
-                <ActivityIndicator size="large" color="#000000" />
-            ) : (
-                <ScrollView>
-                    {pois.map((poi: POI) => (
-                        <TouchableOpacity key={poi._id} onPress={() => navigateToPoi(poi)}>
-                            <View style={styles.card}>
-                                <Image source={{ uri: poi.images[0] }} style={styles.image} resizeMode="cover" />
-                                <View style={styles.cardContent}>
-                                    <Text style={styles.title}>{poi.name}</Text>
-                                    <Text style={styles.location}>{poi.location}</Text>
-                                </View>
+            <ScrollView>
+                {sortedPois.map((poi: POI) => (
+                    <TouchableOpacity key={poi._id} onPress={() => navigateToPoi(poi)}>
+                        <View style={styles.card}>
+                            <Image source={{ uri: poi.images[0] }} style={styles.image} resizeMode="cover" />
+                            <View style={styles.textOverlay}>
+                                <Text style={styles.title}>{poi.name}</Text>
+                                <Text style={styles.location}>{poi.location}</Text>
                             </View>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            )}
+                        </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
         </View>
     );
 };
@@ -72,15 +57,22 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 200,
     },
-    cardContent: {
+    textOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.9)",
         padding: 10,
     },
     title: {
         fontSize: 18,
         fontWeight: "bold",
+        color: 'black',
     },
     location: {
         fontSize: 14,
+        color: 'black',
     },
 });
 

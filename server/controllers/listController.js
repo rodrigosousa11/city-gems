@@ -59,20 +59,26 @@ const addPOIToList = async (req, res) => {
     try {
         const listId = req.params.id;
         const userId = req.user; 
-
         const poiToAdd = req.body.poiId;
 
-        const updatedList = await FavoriteList.findOneAndUpdate(
-            { _id: listId, user: userId },
-            { $push: { pois: poiToAdd } }, 
-            { new: true }
-        ).populate('pois');
+        // Fetch the list to check if the POI already exists
+        const list = await FavoriteList.findOne({ _id: listId, user: userId });
 
-        if (!updatedList) {
+        if (!list) {
             return res.status(404).json({ message: "Favorite list not found" });
         }
 
-        res.status(200).json(updatedList);
+        // Check if the POI is already in the list
+        if (list.pois.includes(poiToAdd)) {
+            return res.status(400).json({ message: "POI already exists in the list" });
+        }
+
+        // If POI is not in the list, add it
+        list.pois.push(poiToAdd);
+        const updatedList = await list.save();
+        const populatedList = await updatedList.populate('pois').execPopulate();
+
+        res.status(200).json(populatedList);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -81,7 +87,6 @@ const addPOIToList = async (req, res) => {
 const deleteList = async (req, res) => {
     try {
         const listId = req.params.id;
-
         const userId = req.user;
 
         const deletedList = await FavoriteList.findOneAndDelete({ _id: listId, user: userId });
@@ -117,7 +122,6 @@ const deletePOIFromList = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 module.exports = {
     getUserLists,

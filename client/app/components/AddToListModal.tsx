@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Alert } from 'react-native';
 import { POI } from '../screens/Poi';
 import { API_URL, api } from '../context/AuthContext';
 
@@ -8,7 +8,7 @@ interface AddToListModalProps {
     onClose: () => void;
     poi: POI;
     existingLists: List[];
-    refreshLists: () => void; // Function to refresh the lists after an update
+    refreshLists: () => void; 
 }
 
 interface List {
@@ -28,8 +28,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ visible, onClose, poi, 
                 console.error("No data returned from the server");
             }
             onClose();
-        } catch (error) {
-            console.error("Error adding POI:", error);
+        } catch (err) {
+            const error = err as { response?: { status: number, data: { message: string } } };
+            if (error.response && error.response.status === 400 && error.response.data.message === "POI already exists in the list") {
+                Alert.alert("Error", "POI already exists in the list");
+            } else {
+                console.error("Error adding POI:", error);
+            }
         }
     };
 
@@ -52,7 +57,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ visible, onClose, poi, 
 
     return (
         <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={true}
             visible={visible}
             onRequestClose={onClose}
@@ -60,19 +65,25 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ visible, onClose, poi, 
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
                     <Text style={styles.modalText}>Select or Create a List</Text>
-                    {existingLists.map(list => (
-                        <TouchableOpacity key={list._id} onPress={() => handleAddToList(list._id)}>
-                            <Text style={styles.listItem}>{list.name}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    <ScrollView style={styles.listsContainer}>
+                        {existingLists.map(list => (
+                            <TouchableOpacity key={list._id} style={styles.listItem} onPress={() => handleAddToList(list._id)}>
+                                <Text style={styles.listItemText}>{list.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                     <TextInput
                         style={styles.input}
                         placeholder="Enter new list name"
                         value={newListName}
                         onChangeText={setNewListName}
                     />
-                    <Button title="Create New List" onPress={handleCreateAndAddToList} />
-                    <Button title="Close" onPress={onClose} />
+                    <TouchableOpacity style={styles.button} onPress={handleCreateAndAddToList}>
+                        <Text style={styles.buttonText}>Create New List</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Text style={styles.cancelButtonText}>Close</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </Modal>
@@ -89,8 +100,7 @@ const styles = StyleSheet.create({
     modalView: {
         backgroundColor: 'white',
         borderRadius: 20,
-        padding: 35,
-        alignItems: 'center',
+        padding: 20,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -99,25 +109,60 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
+        width: '80%',
     },
     modalText: {
         marginBottom: 15,
-        textAlign: 'center',
-        fontSize: 18,
+        fontSize: 21,
         fontWeight: 'bold',
     },
-    listItem: {
-        fontSize: 16,
+    listsContainer: {
+        width: '100%',
+        maxHeight: 150,
         marginBottom: 10,
+    },
+    listItem: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 5,
+    },
+    listItemText: {
+        fontSize: 16,
     },
     input: {
         height: 40,
         borderColor: 'gray',
         borderWidth: 1,
-        borderRadius: 5,
+        borderRadius: 10,
         marginBottom: 10,
         paddingLeft: 10,
         width: '100%',
+    },
+    button: {
+        backgroundColor: '#262626',
+        borderRadius: 10,
+        padding: 10,
+        marginTop: 10,
+        width: '100%',
+        alignItems: 'center',
+    },
+    closeButton: {
+        borderRadius: 10,  
+        padding: 10,
+        marginTop: 10,
+        width: '100%',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#B68B38',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+    },
+    cancelButtonText: {
+        color: '#B68B38',
+        fontSize: 16,
     },
 });
 

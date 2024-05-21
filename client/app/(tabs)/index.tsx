@@ -11,6 +11,7 @@ import {
     TextInput,
     ScrollView,
 } from "react-native";
+import * as Location from 'expo-location';
 import { API_URL, api } from "../context/AuthContext";
 import { POI } from "../screens/Poi";
 import SearchBar from "../components/SearchBar";
@@ -22,6 +23,8 @@ const Home = ({ navigation }: { navigation: any }) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [poiSuggestions, setPOISuggestions] = useState<POI[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+    const [nearbyPOIs, setNearbyPOIs] = useState<POI[]>([]);
 
     useEffect(() => {
         const fetchPOIs = async () => {
@@ -36,8 +39,52 @@ const Home = ({ navigation }: { navigation: any }) => {
             }
         };
 
+        const getUserLocation = async () => {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.error('Permission to access location was denied');
+                return;
+            }
+
+            const location = await Location.getCurrentPositionAsync({});
+            setUserLocation(location);
+        };
+
         fetchPOIs();
+        getUserLocation();
     }, []);
+
+    useEffect(() => {
+        if (userLocation && pois.length > 0) {
+            const sortedPOIs = [...pois].map(poi => {
+                const distance = getDistance(userLocation.coords.latitude, userLocation.coords.longitude, poi.latitude, poi.longitude);
+                return { ...poi, distance };
+            }).sort((a, b) => a.distance - b.distance);
+
+            sortedPOIs.forEach(poi => {
+                console.log(`POI: ${poi.name}, Distance: ${poi.distance.toFixed(2)} km`);
+            });
+
+            setNearbyPOIs(sortedPOIs);
+        }
+    }, [userLocation, pois]);
+
+    const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // Distance in km
+        return distance;
+    }
+
+    const deg2rad = (deg: number) => {
+        return deg * (Math.PI / 180);
+    }
 
     const navigateToPoi = (poi: POI) => {
         navigation.navigate("POIDetails", { poi });
@@ -129,7 +176,7 @@ const Home = ({ navigation }: { navigation: any }) => {
                                     Most Visited Locations
                                 </Text>
                                 <TouchableOpacity
-                                    onPress={() => navigation.navigate("MostVisitedLocations")}
+                                    onPress={() => navigation.navigate("MostVisitedLocations", { pois: pois.slice(0, 10) })}
                                 >
                                     <Text style={styles.seeAll}>See All</Text>
                                 </TouchableOpacity>
@@ -147,7 +194,7 @@ const Home = ({ navigation }: { navigation: any }) => {
                                     Nearby Locations
                                 </Text>
                                 <TouchableOpacity
-                                    onPress={() => navigation.navigate("NearbyLocations")}
+                                    onPress={() => navigation.navigate("NearbyLocations", { pois: nearbyPOIs })}
                                 >
                                     <Text style={styles.seeAll}>See All</Text>
                                 </TouchableOpacity>
@@ -156,9 +203,7 @@ const Home = ({ navigation }: { navigation: any }) => {
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                             >
-                                {renderPois(
-                                    pois.filter((poi) => poi.visits > 10)
-                                )}
+                                {renderPois(nearbyPOIs)}
                             </ScrollView>
                         </>
                     )}
@@ -181,7 +226,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
-        paddingHorizontal: 5,
+        paddingHorizontal: 8,
     },
     heading: {
         fontSize: 24,
@@ -192,8 +237,8 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: "white",
         borderRadius: 10,
-        height: 270,
-        width: 190,
+        height: 290,
+        width: 195,
         marginHorizontal: 7,
         marginBottom: 20,
         overflow: "hidden",
@@ -222,6 +267,7 @@ const styles = StyleSheet.create({
     },
     seeAll: {
         fontWeight: "bold",
+        color: "#B68B38",
     },
     suggestionsContainer: {
         position: "absolute",

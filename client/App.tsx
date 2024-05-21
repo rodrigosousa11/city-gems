@@ -21,8 +21,12 @@ export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     List: { name: string } | undefined;
-    MostVisitedLocations: undefined;
-    NearbyLocations: undefined;
+    MostVisitedLocations: {
+        pois: POI[];
+    };
+    NearbyLocations: {
+        pois: POI[];
+    };
     PasswordRecovery: undefined;
     ResetPassword: { token: string };
     VerifyCode: { email: string };
@@ -46,6 +50,7 @@ export const Layout = () => {
             <Stack.Navigator
                 screenOptions={{
                     headerBackTitleVisible: false, 
+                    headerTintColor: 'black',
                 }}
             >
                 {authState?.authenticated ? (
@@ -74,10 +79,16 @@ export const Layout = () => {
                         <Stack.Screen 
                             name="MostVisitedLocations" 
                             component={MostVisitedLocations} 
+                            options={{
+                                title: "Most Visited Locations"
+                            }}
                         />
                         <Stack.Screen 
                             name="NearbyLocations" 
                             component={NearbyLocations} 
+                            options={{
+                                title: "Nearby Locations"
+                            }}
                         />
                     </>
                 ) : (

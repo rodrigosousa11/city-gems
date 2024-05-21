@@ -38,8 +38,7 @@ const renderWeather = (loading: boolean, weatherDescription: string, temperature
     }
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}> 
-            <Text style={{ fontSize: 18 }}>{renderWeatherIcon(weatherDescription)} {weatherDescription.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</Text> 
-            <Text style={{ fontSize: 18 }}> - {temperature}ºC</Text>
+            <Text style={{ fontSize: 18 }}>{renderWeatherIcon(weatherDescription)} {weatherDescription.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} | {temperature}ºC</Text> 
         </View>
     );
 };

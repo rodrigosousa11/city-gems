@@ -22,6 +22,7 @@ export default function Settings() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isEditingPassword, setIsEditingPassword] = useState(false);
+    const [isEditingDetails, setIsEditingDetails] = useState(false);
 
     useEffect(() => {
         api.get(`${API_URL}/user/me`)
@@ -47,7 +48,7 @@ export default function Settings() {
             if (!passwordsMatch()) {
                 return;
             }
-
+    
             const userDataToUpdate = {
                 firstName: editedFirstName,
                 lastName: editedLastName,
@@ -58,14 +59,17 @@ export default function Settings() {
             const response = await api.put(`${API_URL}/user/details`, userDataToUpdate);
             console.log("User details updated:", response.data);
             setUserData({ ...userData, firstName: editedFirstName, lastName: editedLastName, email: editedEmail });
-            setCurrentPassword(""); // Clear current password field
-            setNewPassword(""); // Clear new password field
-            setConfirmPassword(""); // Clear confirm password field
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setIsEditingPassword(false); 
+            setIsEditingDetails(false); 
         } catch (error) {
             console.error("Error updating user details:", error);
         }
     };
     
+
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -73,7 +77,7 @@ export default function Settings() {
             aspect: [4, 3],
             quality: 1,
         });
-    
+
         if (!result.canceled && result.assets) {
             try {
                 const uri = result.assets[0].uri;
@@ -84,23 +88,23 @@ export default function Settings() {
             }
         }
     };
-    
+
     const compressImage = async (uri: string) => {
         const compressedImage = await ImageManipulator.manipulateAsync(uri, [], { compress: 0.1 });
         return compressedImage;
     };
-    
-    const uploadImagesToFirebase = async () => {    
+
+    const uploadImagesToFirebase = async () => {
         try {
             const uploadPromises = images.map(async (image) => {
                 const imageRef = ref(storage, 'images/' + Math.random().toString(36).substring(7));
                 const response = await fetch(image.uri);
                 const blob = await response.blob();
                 const uploadTask = uploadBytesResumable(imageRef, blob);
-    
+
                 return new Promise((resolve, reject) => {
                     uploadTask.on('state_changed',
-                        () => {},
+                        () => { },
                         (error) => {
                             console.error("Error uploading image:", error);
                             reject(error);
@@ -112,7 +116,7 @@ export default function Settings() {
                     );
                 });
             });
-    
+
             const imageUrls = await Promise.all(uploadPromises);
             return imageUrls.filter(url => url);
         } catch (error) {
@@ -120,20 +124,19 @@ export default function Settings() {
             return [];
         }
     };
-    
-    
+
     const createPOI = async () => {
         setShowLoading(true);
         const imageUrls = await uploadImagesToFirebase();
         setShowLoading(false);
-    
+
         try {
             const response = await api.post(`${API_URL}/poi/new`, {
                 name,
                 description,
                 latitude,
                 longitude,
-                images: imageUrls 
+                images: imageUrls
             });
             console.log("POI created:", response.data);
             setName("");
@@ -145,8 +148,7 @@ export default function Settings() {
             console.error("Error creating POI:", error);
         }
     };
-    
-    // Function to validate if passwords match
+
     const passwordsMatch = () => {
         if (newPassword !== confirmPassword) {
             Alert.alert("Passwords do not match");
@@ -155,7 +157,13 @@ export default function Settings() {
         return true;
     };
 
-    const togglePasswordEditing = () => {
+    const toggleDetailsEditing = () => {
+        if (isEditingDetails) {
+            setEditedFirstName(userData.firstName);
+            setEditedLastName(userData.lastName);
+            setEditedEmail(userData.email);
+        }
+        setIsEditingDetails(!isEditingDetails);
         setIsEditingPassword(!isEditingPassword);
     };
 
@@ -163,24 +171,31 @@ export default function Settings() {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.container}>
                 <Text style={styles.title}>Account Details</Text>
+                <Text style={styles.label}>First Name</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="First Name"
                     onChangeText={(text) => setEditedFirstName(text)}
                     value={editedFirstName}
+                    editable={isEditingDetails}
                     autoCapitalize="none" />
+                <Text style={styles.label}>Last Name</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Last Name"
                     onChangeText={(text) => setEditedLastName(text)}
                     value={editedLastName}
+                    editable={isEditingDetails}
                     autoCapitalize="none" />
+                <Text style={styles.label}>Email</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
                     onChangeText={(text) => setEditedEmail(text)}
                     value={editedEmail}
+                    editable={isEditingDetails}
                     autoCapitalize="none" />
+                <Text style={styles.label}>Password</Text>
                 <View style={styles.passwordContainer}>
                     <TextInput
                         style={styles.passwordInput}
@@ -189,10 +204,10 @@ export default function Settings() {
                         secureTextEntry={true}
                         editable={false}
                     />
-                    <Button title="Edit" onPress={togglePasswordEditing} />
                 </View>
                 {isEditingPassword && (
                     <View>
+                        <Text style={styles.label}>Current Password</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Current Password"
@@ -200,6 +215,7 @@ export default function Settings() {
                             value={currentPassword}
                             secureTextEntry={true}
                             autoCapitalize="none" />
+                        <Text style={styles.label}>New Password</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="New Password"
@@ -207,6 +223,7 @@ export default function Settings() {
                             value={newPassword}
                             secureTextEntry={true}
                             autoCapitalize="none" />
+                        <Text style={styles.label}>Confirm New Password</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Confirm New Password"
@@ -216,7 +233,8 @@ export default function Settings() {
                             autoCapitalize="none" />
                     </View>
                 )}
-                <Button title="Update User Details" onPress={updateUserDetails} />
+                <Button title={isEditingDetails ? "Cancel" : "Edit Details"} onPress={toggleDetailsEditing} color="#B68B38" />
+                {isEditingDetails && <Button title="Update User Details" onPress={updateUserDetails} color="#B68B38" />}
                 {userData.role === "Admin" && (
                     <View style={styles.formContainer}>
                         <Text style={styles.title}>Add a POI</Text>
@@ -247,13 +265,13 @@ export default function Settings() {
                             onChangeText={(text) => setLongitude(text)}
                             value={longitude}
                             autoCapitalize="none" />
-                        <Button title="Pick images from gallery" onPress={pickImage} />
+                        <Button title="Pick images from gallery" onPress={pickImage} color="#B68B38" />
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {images.map((image, index) => (
                                 <Image key={index} source={{ uri: image.uri }} style={styles.image} />
                             ))}
                         </ScrollView>
-                        <Button title="Create POI" onPress={createPOI} />
+                        <Button title="Create POI" onPress={createPOI} color="#B68B38" />
                     </View>
                 )}
                 <Modal
@@ -285,6 +303,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         marginBottom: 20,
+        fontWeight: 'bold',
+    },
+    label: {
+        fontSize: 16,
+        marginBottom: 5,
+        color: "#333"
     },
     data: {
         fontSize: 18,
@@ -313,7 +337,7 @@ const styles = StyleSheet.create({
         padding: 10,
         height: 140,
         marginBottom: 10,
-        textAlignVertical: 'top', 
+        textAlignVertical: 'top',
     },
     modalContainer: {
         flex: 1,
@@ -337,6 +361,5 @@ const styles = StyleSheet.create({
         borderColor: "#7d7d7d",
         borderRadius: 5,
         padding: 10,
-        marginRight: 10,
     },
 });

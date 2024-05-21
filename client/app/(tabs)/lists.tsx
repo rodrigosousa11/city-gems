@@ -101,8 +101,8 @@ export default function Lists({ navigation }: { navigation: any }) {
                             placeholder="(e.g. holiday)"
                         />
                         <View style={styles.modalButtons}>
-                            <Button title="Cancel" onPress={() => setModalVisible(false)} />
-                            <Button title="Add" onPress={addList} />
+                            <Button title="Cancel" onPress={() => setModalVisible(false)} color="#B68B38"/>
+                            <Button title="Add" onPress={addList} color="#B68B38" />
                         </View>
                     </View>
                 </View>
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        width: 250,
+        width: 280,
         borderColor: 'gray',
         borderWidth: 1,
         borderRadius: 5,

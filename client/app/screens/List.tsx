@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback, Alert, Button } from 'react-native';
 import { api, API_URL } from "../context/AuthContext";
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -13,6 +13,12 @@ interface POI {
     _id: string;
     name: string;
     location: string;
+}
+
+export interface List {
+    _id: string;
+    name: string;
+    pois: POI[];
 }
 
 const List: React.FC<ListProps> = ({ route, navigation }) => {
@@ -62,8 +68,13 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                 console.error("No data returned from the server");
             }
             setModalVisible(false);
-        } catch (error) {
-            console.error("Error adding POI:", error);
+        } catch (err) {
+            const error = err as { response?: { status: number, data: { message: string } } };
+            if (error.response && error.response.status === 400 && error.response.data.message === "POI already exists in the list") {
+                Alert.alert("Error", "POI already exists in the list");
+            } else {
+                console.error("Error adding POI:", error);
+            }
         }
     };
 
@@ -120,6 +131,7 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                     <View style={styles.modalContainer}>
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
+                                <Text style={styles.modalText}>Select or Create a List</Text>
                                 <TextInput
                                     style={styles.searchInput}
                                     onChangeText={handleSearch}
@@ -130,12 +142,15 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                                     keyExtractor={item => item._id}
                                     renderItem={({ item }) => (
                                         <TouchableOpacity onPress={() => addPOI(item)}>
-                                            <View style={styles.poiItemContainer}>
+                                            <View style={styles.poiModalItem}>
                                                 <Text style={styles.poiItem}>{item.name}</Text>
                                             </View>
                                         </TouchableOpacity>
-                                    )}
+                                    )} 
                                 />
+                                <View style={styles.modalButtons}>
+                                    <Button title="Cancel" onPress={() => setModalVisible(false)} color="#B68B38"/>
+                                </View>
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
@@ -158,6 +173,12 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ccc',
         paddingHorizontal: 15,
         paddingVertical: 15,
+    },
+    poiModalItem: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 5,
     },
     poiName: {
         fontSize: 18,
@@ -207,6 +228,16 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginBottom: 10,
         paddingHorizontal: 10,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    modalText: {
+        marginBottom: 15,
+        fontSize: 21,
+        fontWeight: 'bold',
     },
 });
 

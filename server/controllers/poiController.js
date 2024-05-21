@@ -6,7 +6,10 @@ const createPoi = async (req, res) => {
     try {
         const { name, description, latitude, longitude, images } = req.body;
 
-        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const formattedLatitude = latitude.toString().replace(',', '.');
+        const formattedLongitude = longitude.toString().replace(',', '.');
+
+        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${formattedLatitude}&lon=${formattedLongitude}&format=json`);
 
         if (response.status !== 200 || !response.data.address) {
             throw new Error('Failed to fetch location data');
@@ -18,22 +21,21 @@ const createPoi = async (req, res) => {
         const newPoi = new POI({
             name,
             description,
-            latitude,
-            longitude,
+            latitude: formattedLatitude,
+            longitude: formattedLongitude,
             location,
             images
         });
 
         await newPoi.save();
 
-        console.log(response.data.address)
+        console.log(response.data.address);
         res.status(201).json({ message: "POI created successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to create POI" });
     }
 }
-
 
 const getPoIs = async (req, res) => {
     try {
@@ -146,11 +148,39 @@ const addReviewToPoi = async (req, res) => {
     }
 }
 
+const deleteReview = async (req, res) => {
+    try {
+        const { poiId, reviewId } = req.params;
+
+        const poi = await POI.findById(poiId);
+        if (!poi) {
+            return res.status(404).json({ message: "POI not found" });
+        }
+
+        const review = await Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        poi.reviews.pull(reviewId);
+
+        await poi.save();
+
+        await Review.deleteOne({ _id: reviewId });
+
+        res.json({ message: "Review deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to delete review" });
+    }
+}
+
 module.exports = { 
     createPoi,
     getPoIs,
     getPoI,
     updatePoi,
     deletePoi,
-    addReviewToPoi
+    addReviewToPoi,
+    deleteReview
 };

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
 import { StyleSheet, View, SafeAreaView, TouchableWithoutFeedback, TouchableOpacity, Text, TextInput } from "react-native";
 import { API_URL, api } from "../context/AuthContext";
 import { POI } from "../screens/Poi";
@@ -22,6 +22,7 @@ export default function Map({ navigation }: { navigation: any }) {
     const mapRef = useRef<MapView>(null);
     const [pois, setPois] = useState<POI[]>([]);
     const searchInputRef = useRef(null);
+    const [selectedPOIId, setSelectedPOIId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchPOIs = async () => {
@@ -39,6 +40,7 @@ export default function Map({ navigation }: { navigation: any }) {
 
     const handleOutsideClick = () => {
         setShowSuggestions(false);
+        setSelectedPOIId(null); // Reset the selected POI ID
         if (searchInputRef.current) {
             (searchInputRef.current as TextInput).blur(); 
         }
@@ -59,6 +61,7 @@ export default function Map({ navigation }: { navigation: any }) {
         setSearchQuery(query);
         filterPOIs(query);
         setShowSuggestions(true);
+        setSelectedPOIId(null); // Clear the selected POI ID when search query changes
         if (!query) {
             setShowSuggestions(false);
         }
@@ -67,18 +70,19 @@ export default function Map({ navigation }: { navigation: any }) {
     const handlePOISuggestionPress = (poi: POI) => {
         setSearchQuery(poi.name);
         setSearchResult(poi);
+        setSelectedPOIId(poi._id); // Set the selected POI ID
         mapRef.current?.animateToRegion({
             latitude: poi.latitude,
             longitude: poi.longitude,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
         });
+        setShowSuggestions(false);
     };
 
     const renderPOISuggestions = () => {
         return (
             <View style={[styles.suggestionsContainer, { top: containerHeight + 120 }]}>
-
                 {poiSuggestions.map(poi => (
                     <TouchableOpacity
                         key={poi._id}
@@ -115,19 +119,29 @@ export default function Map({ navigation }: { navigation: any }) {
                                 longitude: poi.longitude,
                             }}
                             title={poi.name}
+                            pinColor={poi._id === selectedPOIId ? "blue" : "red"} // Change color based on selection
                             onPress={() => navigation.navigate('POIDetails', { poi })}
-                        />
+                        >
+                            {poi._id === selectedPOIId && (
+                                <Callout>
+                                    <Text>{poi.name}</Text>
+                                </Callout>
+                            )}
+                        </Marker>
                     ))}
-
                     {searchResult && (
                         <Marker
-                            key={"searchResult"} 
+                            key={"searchResult"}
                             coordinate={{
                                 latitude: searchResult.latitude,
                                 longitude: searchResult.longitude,
                             }}
                             title={searchResult.name}
-                        />
+                        >
+                            <Callout>
+                                <Text>{searchResult.name}</Text>
+                            </Callout>
+                        </Marker>
                     )}
                 </MapView>
             </SafeAreaView>
@@ -144,25 +158,6 @@ const styles = StyleSheet.create({
     },
     searchBarContainer: {
         marginHorizontal: 7,
-    },
-    searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        paddingTop: 7,
-        paddingBottom: 7,
-        backgroundColor: "white",
-        borderBottomWidth: 1,
-        borderBottomColor: "#ddd",
-    },
-    searchIcon: {
-        marginRight: 10,
-    },
-    searchInput: {
-        flex: 1,
-        height: 40,
-        marginRight: 10,
-        paddingHorizontal: 10,
     },
     suggestionsContainer: {
         position: 'absolute',
