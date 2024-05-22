@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Home from "./index";
+import Home from "./home";
 import Map from "./map";
 import Lists from "./lists";
 import Settings from "./settings";

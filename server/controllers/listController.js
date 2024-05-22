@@ -61,28 +61,27 @@ const addPOIToList = async (req, res) => {
         const userId = req.user; 
         const poiToAdd = req.body.poiId;
 
-        // Fetch the list to check if the POI already exists
         const list = await FavoriteList.findOne({ _id: listId, user: userId });
 
         if (!list) {
             return res.status(404).json({ message: "Favorite list not found" });
         }
 
-        // Check if the POI is already in the list
         if (list.pois.includes(poiToAdd)) {
             return res.status(400).json({ message: "POI already exists in the list" });
         }
 
-        // If POI is not in the list, add it
         list.pois.push(poiToAdd);
         const updatedList = await list.save();
-        const populatedList = await updatedList.populate('pois').execPopulate();
+        const populatedList = await FavoriteList.findById(updatedList._id).populate('pois');
 
         res.status(200).json(populatedList);
     } catch (error) {
+        console.error("Error adding POI to list:", error); // Log the error for debugging
         res.status(400).json({ message: error.message });
     }
 };
+
 
 const deleteList = async (req, res) => {
     try {

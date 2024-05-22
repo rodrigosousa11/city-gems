@@ -6,15 +6,22 @@ import { Link } from '@react-navigation/native';
 const Register = ({ navigation }: { navigation: any }) => {
     const { onRegister } = useAuth();
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [emailError, setEmailError] = useState('');
 
     const handleRegister = async () => {
         if (!validatePassword(password)) {
             setPasswordError("Password must contain at least 8 characters, including uppercase and lowercase letters, and at least one number or special character.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setConfirmPasswordError("Passwords do not match.");
             return;
         }
 
@@ -44,6 +51,12 @@ const Register = ({ navigation }: { navigation: any }) => {
     const handlePasswordChange = (text: string) => {
         setPassword(text);
         setPasswordError('');
+        setConfirmPasswordError('');
+    }
+
+    const handleConfirmPasswordChange = (text: string) => {
+        setConfirmPassword(text);
+        setConfirmPasswordError('');
     }
 
     const handleEmailChange = (text: string) => {
@@ -86,6 +99,15 @@ const Register = ({ navigation }: { navigation: any }) => {
                     autoCapitalize="none"
                 />
                 {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+                <Text style={styles.label}>Confirm Password</Text>
+                <TextInput
+                    style={styles.input}
+                    onChangeText={handleConfirmPasswordChange}
+                    value={confirmPassword}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                />
+                {confirmPasswordError ? <Text style={styles.error}>{confirmPasswordError}</Text> : null}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={handleRegister} style={styles.button}>
                         <Text style={styles.buttonText}>Sign Up</Text>

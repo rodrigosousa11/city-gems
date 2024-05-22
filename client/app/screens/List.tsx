@@ -70,8 +70,8 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
             setModalVisible(false);
         } catch (err) {
             const error = err as { response?: { status: number, data: { message: string } } };
-            if (error.response && error.response.status === 400 && error.response.data.message === "POI already exists in the list") {
-                Alert.alert("Error", "POI already exists in the list");
+            if (error.response && error.response.status === 400) {
+                Alert.alert("Error", error.response.data.message);
             } else {
                 console.error("Error adding POI:", error);
             }
@@ -97,26 +97,32 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={pois}
-                keyExtractor={item => item._id}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handlePOIPress(item)}>
-                        <View style={styles.poiItemContainer}>
-                            <View>
-                                <Text style={styles.poiName}>{item.name}</Text>
-                                <View style={styles.locationContainer}>
-                                    <Ionicons name="location" size={16} color="#555" style={styles.locationIcon} />
-                                    <Text style={styles.locationText}>{item.location}</Text>
+            {pois.length === 0 ? (
+                <View style={styles.noPOIsContainer}>
+                    <Text style={styles.noPOIsText}>Tap the + button to add a new POI.</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={pois}
+                    keyExtractor={item => item._id}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handlePOIPress(item)}>
+                            <View style={styles.poiItemContainer}>
+                                <View>
+                                    <Text style={styles.poiName}>{item.name}</Text>
+                                    <View style={styles.locationContainer}>
+                                        <Ionicons name="location" size={16} color="#555" style={styles.locationIcon} />
+                                        <Text style={styles.locationText}>{item.location}</Text>
+                                    </View>
                                 </View>
+                                <TouchableOpacity onPress={() => handleDeletePOI(item._id)}>
+                                    <MaterialIcons name="delete-outline" size={28} color="#a32743" />
+                                </TouchableOpacity>
                             </View>
-                            <TouchableOpacity onPress={() => handleDeletePOI(item._id)}>
-                                <MaterialIcons name="delete-outline" size={28} color="black" />
-                            </TouchableOpacity>
-                        </View>
-                    </TouchableOpacity>
-                )}
-            />
+                        </TouchableOpacity>
+                    )}
+                />
+            )}
 
             <TouchableOpacity style={styles.addButton} onPress={handleAddPOI}>
                 <Ionicons name="add-circle-outline" size={60} color="#262626" />
@@ -149,7 +155,7 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                                     )} 
                                 />
                                 <View style={styles.modalButtons}>
-                                    <Button title="Cancel" onPress={() => setModalVisible(false)} color="#B68B38"/>
+                                    <Button title="Cancel" onPress={() => setModalVisible(false)} color="#a32743"/>
                                 </View>
                             </View>
                         </TouchableWithoutFeedback>
@@ -197,6 +203,16 @@ const styles = StyleSheet.create({
     },
     poiItem: {
         fontSize: 18,
+    },
+    noPOIsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noPOIsText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginHorizontal: 20,
     },
     addButton: {
         position: 'absolute',

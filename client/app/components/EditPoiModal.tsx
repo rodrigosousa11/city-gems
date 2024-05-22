@@ -66,7 +66,7 @@ const EditPoiModal: React.FC<EditPoiModalProps> = ({ visible, onClose, poi, onPo
     }
 
     return (
-        <Modal visible={visible} animationType="slide" transparent={true}>
+        <Modal visible={visible} animationType="fade" transparent={true}>
             <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Edit POI</Text>

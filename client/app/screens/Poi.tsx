@@ -334,8 +334,8 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                 />
                 {isAdmin && (
                     <View>
-                        <Button title="Edit POI" onPress={openEditModal} />
-                        <Button title="Delete POI" onPress={handleDeletePOI} color="red" />
+                        <Button title="Edit POI" onPress={openEditModal} color="#B68B38"/>
+                        <Button title="Delete POI" onPress={handleDeletePOI} color="#a32743" />
                     </View>
                 )}
                 <EditPoiModal
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     deleteReviewText: {
-        color: 'red',
+        color: '#a32743',
         fontSize: 14,
     },
 });

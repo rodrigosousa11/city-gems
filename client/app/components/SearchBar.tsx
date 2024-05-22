@@ -41,6 +41,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#ddd",
         borderRadius: 15, 
+        borderWidth: 1,
+        borderColor: "#ddd",
     },
     searchIcon: {
         marginRight: 10,

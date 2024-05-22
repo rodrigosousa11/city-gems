@@ -26,14 +26,17 @@ const updateUserRole = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        user.isAdmin = true;
+        
+        // Toggle user role
+        user.isAdmin = !user.isAdmin;
         await user.save();
-        res.json({ message: "User role updated successfully" });
+        
+        res.json({ message: `User role updated to ${user.isAdmin ? 'Admin' : 'User'} successfully` });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Failed to update user role" });
     }
-}
+};
 
 const updateUserDetails = async (req, res) => {
     try {
@@ -65,8 +68,35 @@ const updateUserDetails = async (req, res) => {
     }
 }
 
+const deleteUserAccount = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (password) {
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(401).json({ message: "Invalid password" });
+            }
+        }
+
+        await User.findOneAndDelete({ email });
+        res.json({ message: "User account deleted successfully" });
+
+    } catch (error) {
+        console.error("Failed to delete user account:", error);
+        res.status(500).json({ message: "Failed to delete user account" });
+    }
+};
+
+
 module.exports = { 
     getLoggedInUserDetails,
     updateUserRole,
-    updateUserDetails
+    updateUserDetails,
+    deleteUserAccount
 };

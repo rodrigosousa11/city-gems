@@ -12,7 +12,7 @@ interface WeatherComponentProps {
 const renderWeatherIcon = (description: string): JSX.Element | null => {
     switch (description.toLowerCase()) {
         case 'clear sky':
-            return <FontAwesome5 name="sun" size={24} color="yellow" />;
+            return <FontAwesome5 name="sun" size={24} color="#fcba03" />;
         case 'few clouds':
         case 'scattered clouds':
         case 'broken clouds':
@@ -20,7 +20,9 @@ const renderWeatherIcon = (description: string): JSX.Element | null => {
             return <FontAwesome5 name="cloud" size={21} color="gray" />;
         case 'shower rain':
         case 'rain':
-            return <FontAwesome5 name="cloud-showers-heavy" size={24} color="blue" />;
+            return <FontAwesome5 name="cloud-showers-heavy" size={24} color="#6ac9fc" />;
+        case 'light rain':
+            return <FontAwesome5 name="cloud-rain" size={24} color="#6ac9fc" />;
         case 'thunderstorm':
             return <FontAwesome5 name="bolt" size={24} color="purple" />;
         case 'snow':

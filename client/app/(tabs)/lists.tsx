@@ -35,7 +35,7 @@ export default function Lists({ navigation }: { navigation: any }) {
             <View style={styles.listItemContainer}>
                 <Text style={styles.listItem}>{item.name}</Text>
                 <TouchableOpacity onPress={() => handleDeleteList(item._id)}>
-                    <MaterialIcons name="delete-outline" size={28} color="black" />
+                    <MaterialIcons name="delete-outline" size={28} color="#a32743" />
                 </TouchableOpacity>
             </View>
         </TouchableOpacity>
@@ -74,12 +74,18 @@ export default function Lists({ navigation }: { navigation: any }) {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={lists}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id}
-                contentContainerStyle={{ flexGrow: 1 }}
-            />
+            {lists.length === 0 ? (
+                <View style={styles.noListsContainer}>
+                    <Text style={styles.noListsText}>Tap the + button to add a new list.</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={lists}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                />
+            )}
             <TouchableOpacity style={styles.addButton} onPress={handleAddList}>
                 <Ionicons name="add-circle-outline" size={60} color="#262626" />
             </TouchableOpacity>
@@ -101,7 +107,7 @@ export default function Lists({ navigation }: { navigation: any }) {
                             placeholder="(e.g. holiday)"
                         />
                         <View style={styles.modalButtons}>
-                            <Button title="Cancel" onPress={() => setModalVisible(false)} color="#B68B38"/>
+                            <Button title="Cancel" onPress={() => setModalVisible(false)} color="#a32743"/>
                             <Button title="Add" onPress={addList} color="#B68B38" />
                         </View>
                     </View>
@@ -127,6 +133,16 @@ const styles = StyleSheet.create({
     },
     listItem: {
         fontSize: 19,
+    },
+    noListsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noListsText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginHorizontal: 20,
     },
     addButton: {
         position: 'absolute',
@@ -156,7 +172,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        width: 280,
+        width: 290,
         borderColor: 'gray',
         borderWidth: 1,
         borderRadius: 5,

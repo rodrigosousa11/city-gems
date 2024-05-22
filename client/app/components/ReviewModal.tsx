@@ -37,14 +37,18 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({ visible, onClose, onSub
                         multiline
                         numberOfLines={4} 
                     />
-                    <Text style={styles.modalText}>Select Rating:</Text>
+                    <Text style={styles.modalText}>Select Rating</Text>
                     <View style={styles.stars}>
                         {[...Array(5)].map((_, i) => (
                             <Star key={i} index={i} />
                         ))}
                     </View>
-                    <Button title="Submit" onPress={handleSubmit} />
-                    <Button title="Cancel" onPress={onClose} />
+                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Text style={styles.cancelButtonText}>Close</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </Modal>
@@ -75,7 +79,8 @@ const styles = StyleSheet.create({
         maxWidth: 400 
     },
     modalText: {
-        fontSize: 18,
+        fontSize: 21,
+        fontWeight: 'bold',
     },
     input: {
         fontSize: 16,
@@ -103,6 +108,31 @@ const styles = StyleSheet.create({
     stars: {
         flexDirection: 'row',
         marginBottom: 10,
+    },
+    button: {
+        backgroundColor: '#262626',
+        borderRadius: 10,
+        padding: 10,
+        marginTop: 10,
+        width: '100%',
+        alignItems: 'center',
+    },
+    closeButton: {
+        borderRadius: 10,  
+        padding: 10,
+        marginTop: 10,
+        width: '100%',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#B68B38',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+    },
+    cancelButtonText: {
+        color: '#B68B38',
+        fontSize: 16,
     },
 });
 

@@ -24,19 +24,22 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ visible, onClose, poi, 
             const response = await api.post(`${API_URL}/user/lists/${listId}`, { poiId: poi._id });
             if (response.data) {
                 refreshLists();
+                Alert.alert("POI added to the list!"); 
+                onClose();
             } else {
                 console.error("No data returned from the server");
             }
-            onClose();
         } catch (err) {
             const error = err as { response?: { status: number, data: { message: string } } };
             if (error.response && error.response.status === 400 && error.response.data.message === "POI already exists in the list") {
                 Alert.alert("Error", "POI already exists in the list");
             } else {
                 console.error("Error adding POI:", error);
+                Alert.alert("Error", "An error occurred while adding the POI to the list");
             }
         }
     };
+    
 
     const handleCreateAndAddToList = async () => {
         if (newListName.trim() !== '') {
@@ -154,14 +157,14 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#B68B38',
+        borderColor: '#a32743',
     },
     buttonText: {
         color: 'white',
         fontSize: 16,
     },
     cancelButtonText: {
-        color: '#B68B38',
+        color: '#a32743',
         fontSize: 16,
     },
 });
