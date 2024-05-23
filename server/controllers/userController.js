@@ -10,8 +10,6 @@ const getLoggedInUserDetails = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.role = user.isAdmin ? 'Admin' : 'User';
-
         res.json({ user });
     } catch (error) {
         console.log(error);
@@ -28,10 +26,10 @@ const updateUserRole = async (req, res) => {
         }
         
         // Toggle user role
-        user.isAdmin = !user.isAdmin;
+        user.role = user.role === 'admin' ? 'user' : 'admin';
         await user.save();
         
-        res.json({ message: `User role updated to ${user.isAdmin ? 'Admin' : 'User'} successfully` });
+        res.json({ message: `User role updated to ${user.role} successfully` });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Failed to update user role" });
@@ -92,7 +90,6 @@ const deleteUserAccount = async (req, res) => {
         res.status(500).json({ message: "Failed to delete user account" });
     }
 };
-
 
 module.exports = { 
     getLoggedInUserDetails,

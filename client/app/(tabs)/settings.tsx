@@ -34,8 +34,7 @@ export default function Settings({ navigation }: { navigation: any }) {
     useEffect(() => {
         api.get(`${API_URL}/user/me`)
             .then(response => {
-                const { user: { firstName, lastName, email, isAdmin } } = response.data;
-                const role = isAdmin ? "Admin" : "User";
+                const { user: { firstName, lastName, email, role } } = response.data;
                 setUserData({ firstName, lastName, email, role });
                 setEditedFirstName(firstName);
                 setEditedLastName(lastName);
@@ -126,6 +125,7 @@ export default function Settings({ navigation }: { navigation: any }) {
             Alert.alert("User role updated successfully");
         } catch (error) {
             console.error("Error updating user role:", error);
+            Alert.alert("Failed to update user role. Please try again later.");
         }
     };
 
@@ -325,7 +325,7 @@ export default function Settings({ navigation }: { navigation: any }) {
                 </View>
             </View>
 
-            {userData.role === "Admin" && (
+            {userData.role === "admin" && (
                 <>
                     <View style={styles.roleUpdateContainer}>
                         <Text style={styles.title}>Update User Role</Text>

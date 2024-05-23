@@ -63,7 +63,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
     const [humidity, setHumidity] = useState<number>(0);
     const [lists, setLists] = useState<List[]>([]);
     const [isAddToListModalVisible, setIsAddToListModalVisible] = useState<boolean>(false);
-    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [userRole, setUserRole] = useState<string>('');
     const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
 
     useEffect(() => {
@@ -86,7 +86,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
     const fetchUserDetails = async () => {
         try {
             const response = await api.get(`${API_URL}/user/me`);
-            setIsAdmin(response.data.user.isAdmin);
+            setUserRole(response.data.user.role);
         } catch (error) {
             console.error("Error fetching user details:", error);
         }
@@ -332,7 +332,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                     existingLists={lists}
                     refreshLists={fetchLists}
                 />
-                {isAdmin && (
+                {userRole && (
                     <View>
                         <Button title="Edit POI" onPress={openEditModal} color="#B68B38"/>
                         <Button title="Delete POI" onPress={handleDeletePOI} color="#a32743" />
@@ -364,7 +364,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                     </View>
                     <Text style={styles.comment}>{item.comment}</Text>
                     <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
-                    {isAdmin && (
+                    {userRole && (
                         <TouchableOpacity onPress={() => handleDeleteReview(item._id)} style={styles.deleteReviewButton}>
                             <Text style={styles.deleteReviewText}>Delete Review</Text>
                         </TouchableOpacity>
