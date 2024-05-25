@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Home from "./home";
 import Map from "./map";
 import Lists from "./lists";
 import Settings from "./settings";
 import { Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useAuth } from "../context/AuthContext";
+import { api, API_URL, useAuth } from "../context/AuthContext";
 import { Octicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,7 +13,28 @@ import { Ionicons } from "@expo/vector-icons";
 const Tab = createBottomTabNavigator();
 
 const MyTabs = () => {
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [loading, setLoading] = useState(true);
     const { onLogout } = useAuth();
+
+    useEffect(() => {
+        const fetchUserDetails = async () => {
+            try {
+                console.log("Fetching user details...");
+                const response = await api.get(`${API_URL}/user/me`);
+                console.log("API response:", response.data);
+                const user = response.data.user;
+                setIsAdmin(user.role === 'admin');
+                console.log("User role is admin:", user.role === 'admin');
+            } catch (error) {
+                console.error("Failed to fetch user details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchUserDetails();
+    }, []);
     
     return (
         <Tab.Navigator
@@ -42,16 +63,18 @@ const MyTabs = () => {
                     ),
                 }}
             />
-            <Tab.Screen
-                name="My Lists"
-                component={Lists}
-                options={{
-                    headerShown: true,
-                    tabBarIcon: ({ color }) => (
-                        <Ionicons name="list" size={28} color={color} />
-                    ),
-                }}
-            />
+            {!isAdmin && (
+                <Tab.Screen
+                    name="My Lists"
+                    component={Lists}
+                    options={{
+                        headerShown: true,
+                        tabBarIcon: ({ color }) => (
+                            <Ionicons name="list" size={28} color={color} />
+                        ),
+                    }}
+                />
+            )}
             <Tab.Screen
                 name="Settings"
                 component={Settings}

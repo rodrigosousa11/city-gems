@@ -235,9 +235,11 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
             <View style={styles.contentContainer}>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>{poi.name}</Text>
-                    <TouchableOpacity style={styles.addButton} onPress={() => openAddToListModal()}>
-                        <Ionicons name="add-circle-outline" size={52} color="#000" />
-                    </TouchableOpacity>
+                    {userRole !== 'admin' && (
+                        <TouchableOpacity style={styles.addButton} onPress={() => openAddToListModal()}>
+                            <Ionicons name="add-circle-outline" size={52} color="#000" />
+                        </TouchableOpacity>
+                    )}
                 </View>
                 <View style={styles.locationContainer}>
                     <Ionicons name="location" size={16} color="#555" style={styles.locationIcon} />
@@ -317,9 +319,11 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                         </Text>
                     </TouchableOpacity>
                 )}
-                <TouchableOpacity style={styles.addReviewButton} onPress={() => setIsModalVisible(true)}>
-                    <Text style={styles.addReviewButtonText}>Add a Review</Text>
-                </TouchableOpacity>
+                {userRole !== 'admin' && (
+                    <TouchableOpacity style={styles.addReviewButton} onPress={() => setIsModalVisible(true)}>
+                        <Text style={styles.addReviewButtonText}>Add a Review</Text>
+                    </TouchableOpacity>
+                )}
                 <AddReviewModal
                     visible={isModalVisible}
                     onClose={() => setIsModalVisible(false)}
