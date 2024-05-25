@@ -161,14 +161,14 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#B68B38',
+        borderColor: '#a32743',
     },
     buttonText: {
         color: 'white',
         fontSize: 16,
     },
     cancelButtonText: {
-        color: '#B68B38',
+        color: '#a32743',
         fontSize: 16,
     },
 });

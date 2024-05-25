@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middlewares/authenticateToken");
+const auhtenticateRole = require("../middlewares/authenticateRole");
 const userController = require("../controllers/userController");
 const listController = require("../controllers/listController");
 
 router.get("/me", authenticateToken, userController.getLoggedInUserDetails);
 router.put("/details", authenticateToken, userController.updateUserDetails);
-router.put("/role", authenticateToken, userController.updateUserRole);
+router.put("/role", authenticateToken, auhtenticateRole, userController.updateUserRole);
 router.delete("/delete", authenticateToken, userController.deleteUserAccount);
 router.get("/lists", authenticateToken, listController.getUserLists);
 router.get("/lists/:id", authenticateToken, listController.getListPois);

@@ -157,13 +157,13 @@ const verifyCodeAndResetPassword = async (req, res) => {
     const { email, code, newPassword } = req.body;
 
     try {
-        const user = await User.findOne({
-            email: email,
-            resetPasswordToken: code,
-            resetPasswordExpires: { $gt: Date.now() },
-        });
+        const user = await User.findOne({ email: email });
 
         if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.resetPasswordToken || user.resetPasswordToken !== code || user.resetPasswordExpires <= Date.now()) {
             return res.status(400).json({ message: 'Verification code is invalid or has expired' });
         }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, Modal, ActivityIndicator, Alert } from "react-native";
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, ActivityIndicator, Alert } from "react-native";
 import { AxiosError } from "axios";
 import { API_URL, api } from "../context/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
@@ -292,6 +292,7 @@ export default function Settings({ navigation }: { navigation: any }) {
                 onChangeText={onChangeText}
                 editable={editable}
                 secureTextEntry={secureTextEntry}
+                autoCapitalize="none"
             />
         </View>
     );
@@ -362,9 +363,9 @@ export default function Settings({ navigation }: { navigation: any }) {
             )}
 
             <View style={styles.deleteOwnAccount}>
-                <Text style={styles.title}>Delete Own Account</Text>
+                <Text style={styles.title}>Delete My Account</Text>
                 {renderInputField("Password", deletePassword, setDeletePassword, true, true)}
-                <Button title="Delete My Account" onPress={deleteOwnAccount} color="#a32743" />
+                <Button title="Delete Account" onPress={deleteOwnAccount} color="#a32743" />
             </View>
         </ScrollView>
     );

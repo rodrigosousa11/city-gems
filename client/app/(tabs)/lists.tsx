@@ -105,6 +105,7 @@ export default function Lists({ navigation }: { navigation: any }) {
                             onChangeText={setNewListName}
                             value={newListName}
                             placeholder="(e.g. holiday)"
+                            autoCapitalize="none"
                         />
                         <View style={styles.modalButtons}>
                             <Button title="Cancel" onPress={() => setModalVisible(false)} color="#a32743"/>

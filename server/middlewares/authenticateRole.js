@@ -9,7 +9,7 @@ const isAdmin = (req, res, next) => {
                 return res.status(404).json({ message: "User not found." });
             }
 
-            if (user.isAdmin) {
+            if (user.role === "admin") {
                 next();
             } else {
                 return res.status(403).json({ message: "Access forbidden. You must be an admin." });

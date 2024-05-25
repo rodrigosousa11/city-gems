@@ -236,7 +236,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>{poi.name}</Text>
                     <TouchableOpacity style={styles.addButton} onPress={() => openAddToListModal()}>
-                        <Ionicons name="add-circle-outline" size={42} color="#000" />
+                        <Ionicons name="add-circle-outline" size={52} color="#000" />
                     </TouchableOpacity>
                 </View>
                 <View style={styles.locationContainer}>
@@ -332,7 +332,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                     existingLists={lists}
                     refreshLists={fetchLists}
                 />
-                {userRole && (
+                {userRole === 'admin' && (
                     <View>
                         <Button title="Edit POI" onPress={openEditModal} color="#B68B38"/>
                         <Button title="Delete POI" onPress={handleDeletePOI} color="#a32743" />
@@ -364,7 +364,7 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
                     </View>
                     <Text style={styles.comment}>{item.comment}</Text>
                     <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
-                    {userRole && (
+                    {userRole === 'admin' && (
                         <TouchableOpacity onPress={() => handleDeleteReview(item._id)} style={styles.deleteReviewButton}>
                             <Text style={styles.deleteReviewText}>Delete Review</Text>
                         </TouchableOpacity>
