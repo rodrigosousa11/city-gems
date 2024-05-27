@@ -23,8 +23,12 @@ const VerifyCodeScreen = ({ route, navigation }: { route: any, navigation: any }
             } else {
                 Alert.alert('Error', response.data.message || 'Failed to reset password');
             }
-        } catch (error) {
-            Alert.alert('Error', 'Failed to reset password');
+        } catch (error: any) {
+            if (error.response && error.response.data && error.response.data.message) {
+                Alert.alert('Error', error.response.data.message);
+            } else {
+                Alert.alert('Error', 'Failed to reset password. Please try again later.');
+            }
         }
     };
 

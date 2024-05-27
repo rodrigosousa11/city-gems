@@ -176,9 +176,10 @@ const verifyCodeAndResetPassword = async (req, res) => {
         res.status(200).json({ message: 'Password has been reset' });
     } catch (error) {
         console.error('Error in verifyCodeAndResetPassword:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 };
+
 
 module.exports = {
     registerUser,
