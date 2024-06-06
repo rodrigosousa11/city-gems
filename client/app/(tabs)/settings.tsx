@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, ActivityIndicator, Alert } from "react-native";
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Image, ActivityIndicator, Alert, Modal } from "react-native";
 import { AxiosError } from "axios";
 import { API_URL, api } from "../context/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
@@ -30,6 +30,7 @@ export default function Settings({ navigation }: { navigation: any }) {
     const [deletePassword, setDeletePassword] = useState("");
 
     const { onLogout } = useAuth();
+    const { logoutDeletedUser } = useAuth();
     
     useEffect(() => {
         api.get(`${API_URL}/user/me`)
@@ -124,6 +125,10 @@ export default function Settings({ navigation }: { navigation: any }) {
             console.log("User role updated:", response.data);
             Alert.alert("User role updated successfully");
         } catch (error) {
+            if ((error as any).response?.status === 404) {
+                Alert.alert("User not found.");
+                return;
+            }
             console.error("Error updating user role:", error);
             Alert.alert("Failed to update user role. Please try again later.");
         }
@@ -134,17 +139,21 @@ export default function Settings({ navigation }: { navigation: any }) {
             Alert.alert("Please enter your password to delete your account.");
             return;
         }
-
-        if (!onLogout) {
-            console.error("Logout function is not defined");
-            return;
-        }
-
+    
         try {
-            await onLogout();
-            const response = await api.delete(`${API_URL}/user/delete`, { data: { email: userData.email, password: deletePassword } });
+            console.log("Sending request to delete account");
+            const response = await api.delete(`${API_URL}/user/delete`, { 
+                data: { email: userData.email, password: deletePassword }
+            });
             console.log("Own account deleted:", response.data);
             Alert.alert("Account deleted successfully");
+    
+            console.log("Attempting to logout");
+            if (logoutDeletedUser) {
+                await logoutDeletedUser();
+            } else {
+                console.error("LogoutDeletedUser function is not defined");
+            }
         } catch (error) {
             if ((error as any).response?.status === 401) {
                 Alert.alert("Incorrect password.");
@@ -153,7 +162,7 @@ export default function Settings({ navigation }: { navigation: any }) {
             console.error("Error deleting own account:", error);
             Alert.alert("Failed to delete account. Please try again later.");
         }
-    };
+    };    
 
     const deleteUserAccount = async () => {
         try {
@@ -353,12 +362,25 @@ export default function Settings({ navigation }: { navigation: any }) {
                         {renderInputField("Latitude", latitude, setLatitude, true)}
                         {renderInputField("Longitude", longitude, setLongitude, true)}
                         <Button title="Pick Image" onPress={pickImage} color="#B68B38" />
-                        {images.map((image, index) => (
-                            <Image key={index} source={{ uri: image.uri }} style={styles.image} />
-                        ))}
+                        <ScrollView horizontal={true}>
+                            {images.map((image, index) => (
+                                <Image key={index} source={{ uri: image.uri }} style={{ width: 100, height: 100, margin: 5 }} />
+                            ))}
+                        </ScrollView>
                         <Button title="Create POI" onPress={createPOI} color="#B68B38" />
-                        {showLoading && <ActivityIndicator size="large" color="#0000ff" />}
                     </View>
+                    <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={showLoading}
+                    onRequestClose={() => setShowLoading(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <ActivityIndicator size="large" color="#000000" />
+                        </View>
+                    </View>
+                </Modal>
                 </>
             )}
 
@@ -426,5 +448,16 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         marginVertical: 8,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 15,
     },
 });

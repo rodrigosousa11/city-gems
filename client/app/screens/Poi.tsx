@@ -265,8 +265,8 @@ const POIDetails: React.FC<POIDetailsProps> = ({ route, navigation }) => {
     
     const openGoogleMaps = async () => {
         Alert.alert(
-            'Location Permission',
-            'We need to access your location to provide directions to the POI.',
+            'Permission',
+            'We need your permission to open an external app.',
             [
                 {
                     text: 'Cancel',
@@ -424,6 +424,7 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontWeight: 'bold',
         marginBottom: 5,
+        marginEnd: 50,
     },
     description: {
         fontSize: 16,

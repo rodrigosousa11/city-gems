@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Review = require("../models/Review");
 const bcrypt = require("bcrypt");
 
 const getLoggedInUserDetails = async (req, res) => {
@@ -70,19 +71,33 @@ const deleteUserAccount = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        console.log(`Received request to delete account for email: ${email}`);
+        
         const user = await User.findOne({ email });
         if (!user) {
+            console.log("User not found");
             return res.status(404).json({ message: "User not found" });
         }
 
+        console.log("User found:", user.email);
+
+        // Check if password is provided and compare it
         if (password) {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
+                console.log("Password mismatch:", password, user.password);
                 return res.status(401).json({ message: "Invalid password" });
             }
+            console.log("Password match");
         }
 
-        await User.findOneAndDelete({ email });
+        // Delete associated reviews
+        await Review.deleteMany({ user: user._id });
+        console.log("Associated reviews deleted");
+
+        // Proceed with account deletion
+        await User.findByIdAndDelete(user._id);
+        console.log("User account deleted successfully");
         res.json({ message: "User account deleted successfully" });
 
     } catch (error) {
@@ -90,6 +105,9 @@ const deleteUserAccount = async (req, res) => {
         res.status(500).json({ message: "Failed to delete user account" });
     }
 };
+
+
+
 
 module.exports = { 
     getLoggedInUserDetails,

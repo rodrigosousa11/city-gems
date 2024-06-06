@@ -7,6 +7,7 @@ interface AuthProps {
     onRegister?: (firstName: string, lastName: string, email: string, password: string) => Promise<any>;
     onLogin?: (email: string, password: string) => Promise<any>;
     onLogout?: () => Promise<any>;
+    logoutDeletedUser?: () => Promise<any>;
 }
 
 const TOKEN_KEY = 'token';
@@ -139,13 +140,35 @@ export const AuthProvider = ({ children }: any) => {
             console.log('Logged out');
         } catch (error) {
             console.error('Failed to log out:', error);
+    
+            // Even if logout fails, clear the local state and tokens
+            await SecureStore.deleteItemAsync(TOKEN_KEY);
+            await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+            api.defaults.headers.common['Authorization'] = '';
+            setAuthState({
+                token: null,
+                authenticated: false,
+            });
         }
     };
-    
+
+    const logoutDeletedUser = async () => {
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+        api.defaults.headers.common['Authorization'] = '';
+        setAuthState({
+            token: null,
+            authenticated: false,
+        });
+
+        console.log('Deleted user');
+    }
+
     const value = {
         onRegister: register,  
         onLogin: login, 
         onLogout: logout,
+        logoutDeletedUser,
         authState,
     };
 

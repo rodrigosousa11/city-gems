@@ -137,7 +137,7 @@ const List: React.FC<ListProps> = ({ route, navigation }) => {
                     <View style={styles.modalContainer}>
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalText}>Select or Create a List</Text>
+                                <Text style={styles.modalText}>Select a POI</Text>
                                 <TextInput
                                     style={styles.searchInput}
                                     onChangeText={handleSearch}
