@@ -18,7 +18,7 @@
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false,
-        "googleMapsApiKey": "AIzaSyAwftX6PDDHHKdkigS3frXOgZw7H6oK0JM"
+        "googleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_API_KEY"
       },
       "bundleIdentifier": "com.anonymous.citygemsclient"
     },
